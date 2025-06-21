@@ -2,7 +2,7 @@ const express = require("express");
 const teamRoute = express.Router();
 const team = require("../models/team");
 const teamController = require("../controllers/team.controller");
-const { query, param } = require("express-validator");
+const { query, param, body } = require("express-validator");
 const {
   registerRules,
   validate,
@@ -36,5 +36,19 @@ teamRoute
     protectedRoute,
     isAdmin,
     teamController.findByID
+  );
+teamRoute
+  .route("/:id")
+  .put(
+    [
+      param("id").notEmpty().withMessage("ID must be required"),
+      body("teamName")
+        .trim()
+        .notEmpty()
+        .withMessage("Team Name must be required"),
+    ],
+    protectedRoute,
+    isAdmin,
+    teamController.updateTeam
   );
 module.exports = teamRoute;

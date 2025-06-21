@@ -80,9 +80,35 @@ const findByID = async (req, res) => {
       .json({ message: "Server error or invalid ID format." });
   }
 };
-
+const updateTeam = async (req, res) => {
+  const teamID = req.params.id;
+  const { teamName } = req.body;
+  try {
+    const updatedTeam = await Team.findByIdAndUpdate(
+      teamID,
+      {
+        teamName: teamName,
+      },
+      { new: true, runValidators: true }
+    );
+    if (!updatedTeam) {
+      return res.status(404).json({ message: "Team not found." });
+    }
+    const response = {
+      message: "Updated team successfully",
+      data: updatedTeam,
+    };
+    return res.status(200).json(response);
+  } catch (error) {
+    console.error("Registration Error: " + error);
+    return res
+      .status(500)
+      .json({ message: "An error occurred during registration." });
+  }
+};
 module.exports = {
   findAllTeam,
   createTeam,
   findByID,
+  updateTeam,
 };

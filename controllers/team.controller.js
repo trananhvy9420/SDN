@@ -106,9 +106,29 @@ const updateTeam = async (req, res) => {
       .json({ message: "An error occurred during registration." });
   }
 };
+const deleteTeam = async (req, res) => {
+  const teamID = req.params.id;
+  try {
+    const deleteTeam = await Team.findByIdAndDelete(teamID);
+    if (!deleteTeam) {
+      return res.status(404).json({ message: "Team not found" });
+    }
+    const response = {
+      message: "Deleted team successfully",
+      data: deleteTeam,
+    };
+    return res.status(200).json(response);
+  } catch (error) {
+    console.error("Error deleting team: ", error);
+    return res
+      .status(500)
+      .json({ message: "An error occurred during registration." });
+  }
+};
 module.exports = {
   findAllTeam,
   createTeam,
   findByID,
   updateTeam,
+  deleteTeam,
 };

@@ -51,4 +51,12 @@ teamRoute
     isAdmin,
     teamController.updateTeam
   );
+teamRoute
+  .route("/delete/:id")
+  .delete(
+    [param("id").notEmpty().withMessage("ID must be required")],
+    protectedRoute,
+    isAdmin,
+    teamController.deleteTeam
+  );
 module.exports = teamRoute;

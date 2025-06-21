@@ -1,7 +1,7 @@
 const express = require("express");
 const memberRoute = express.Router();
 const member = require("../models/member");
-const memberController = require("../controllers/auth.controller");
+const memberController = require("../controllers/member.controller");
 const { query } = require("express-validator");
 const {
   registerRules,
@@ -10,10 +10,10 @@ const {
   protectedRoute,
   isAdmin,
 } = require("../middlewares/validation.middleware");
-memberRoute.route("/login").post(loginRules(), memberController.signIn);
-memberRoute
-  .route("/register")
-  .post(registerRules(), validate, memberController.signUp);
+// memberRoute.route("/login").post(loginRules(), memberController.signIn);
+// memberRoute
+//   .route("/register")
+//   .post(registerRules(), validate, memberController.signUp);
 memberRoute.route("/me").get(protectedRoute, memberController.fetchUserProfile);
 memberRoute
   .route("/fetchAllUser")

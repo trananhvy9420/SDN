@@ -61,7 +61,28 @@ const createTeam = async (req, res) => {
       .json({ message: "An error occurred during registration." });
   }
 };
+const findByID = async (req, res) => {
+  const id = req.params.id;
+  try {
+    const foundedTeam = await Team.findById(id);
+    if (!foundedTeam) {
+      return res.status(404).json({ message: "Team not found with that ID" });
+    }
+    const response = {
+      message: "Successfully found that team",
+      data: foundedTeam,
+    };
+    return res.status(200).json(response);
+  } catch (error) {
+    console.log("Error fetching team by ID:", error);
+    return res
+      .status(500)
+      .json({ message: "Server error or invalid ID format." });
+  }
+};
+
 module.exports = {
   findAllTeam,
   createTeam,
+  findByID,
 };

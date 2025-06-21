@@ -2,7 +2,7 @@ const express = require("express");
 const teamRoute = express.Router();
 const team = require("../models/team");
 const teamController = require("../controllers/team.controller");
-const { query } = require("express-validator");
+const { query, param } = require("express-validator");
 const {
   registerRules,
   validate,
@@ -11,7 +11,7 @@ const {
   isAdmin,
 } = require("../middlewares/validation.middleware");
 teamRoute
-  .route("/getAll")
+  .route("/")
   .get(
     [
       query("page")
@@ -27,7 +27,14 @@ teamRoute
     isAdmin,
     teamController.findAllTeam
   );
+
+teamRoute.route("/").post(protectedRoute, isAdmin, teamController.createTeam);
 teamRoute
-  .route("/createTeam")
-  .post(protectedRoute, isAdmin, teamController.createTeam);
+  .route("/:id")
+  .get(
+    [param("id").notEmpty().withMessage("ID must be required")],
+    protectedRoute,
+    isAdmin,
+    teamController.findByID
+  );
 module.exports = teamRoute;

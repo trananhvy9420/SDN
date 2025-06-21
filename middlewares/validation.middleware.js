@@ -5,7 +5,7 @@ const registerRules = () => {
     body("membername")
       .trim()
       .notEmpty()
-      .withMessage("Username is required")
+      .withMessage("Membername is required")
       .isLength({ min: 10 })
       .withMessage("Membername must be at least 10 characters"),
     body("password")
@@ -28,7 +28,12 @@ const registerRules = () => {
       .toDate(),
   ];
 };
-
+const loginRules = () => {
+  return [
+    body("membername").trim().notEmpty().withMessage("Membername is required"),
+    body("password").trim().notEmpty().withMessage("Password is required"),
+  ];
+};
 const validate = (req, res, next) => {
   const errors = validationResult(req);
   if (errors.isEmpty()) {
@@ -42,5 +47,6 @@ const validate = (req, res, next) => {
 
 module.exports = {
   validate,
+  loginRules,
   registerRules,
 };

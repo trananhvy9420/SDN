@@ -5,8 +5,9 @@ const memberController = require("../controllers/auth.controller");
 const {
   registerRules,
   validate,
+  loginRules,
 } = require("../middlewares/validation.middleware");
-memberRouter.route("/login").post(memberController.signIn);
+memberRouter.route("/login").post(loginRules(), memberController.signIn);
 memberRouter
   .route("/register")
   .post(registerRules(), validate, memberController.signUp);

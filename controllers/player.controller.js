@@ -39,6 +39,23 @@ const findAllPlayer = async (req, res) => {
       .json({ message: "Error fetching players from database." });
   }
 };
+const foundPlayer = async (req, res) => {
+  try {
+    const playerName = req.query.playerName;
+    const foundedPlayer = await Player.findOne({ playerName: playerName });
+    const response = {
+      message: "Successfully fetched players with that id",
+      data: foundedPlayer,
+    };
+    return res.status(200).json(response);
+  } catch (error) {
+    console.log("Error fetching players:", error);
+    return res
+      .status(500)
+      .json({ message: "Error fetching players from database." });
+  }
+};
 module.exports = {
   findAllPlayer,
+  foundPlayer,
 };

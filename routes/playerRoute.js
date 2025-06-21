@@ -18,4 +18,10 @@ playerRoute
     ],
     playerController.findAllPlayer
   );
+playerRoute
+  .route("/search")
+  .get(
+    [query("playerName").trim().notEmpty().withMessage("Name must be filled")],
+    playerController.foundPlayer
+  );
 module.exports = playerRoute;

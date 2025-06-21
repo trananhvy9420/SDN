@@ -55,7 +55,38 @@ const fetchAllMember = async (req, res) => {
       .json({ message: "Error fetching players from database." });
   }
 };
+const updateMember = async (req, res) => {
+  const teamID = req.params.id;
+  const { membername, password, name, YOB } = req.body;
+  try {
+    const updatedMember = await Member.findByIdAndUpdate(teamID, {
+      membername: membername,
+      password: password,
+      name: name,
+      YOB: YOB,
+    });
+    if (!updatedMember) {
+      return res.status(404).json({ message: "Member not found." });
+    }
+    const response = {
+      message: "Updated member successfully",
+      data: {
+        membername: membername,
+        password: password,
+        name: name,
+        YOB: YOB,
+      },
+    };
+    return res.status(200).json(response);
+  } catch (error) {
+    console.error("Updated Error: " + error);
+    return res
+      .status(500)
+      .json({ message: "An error occurred during registration." });
+  }
+};
 module.exports = {
   fetchAllMember,
   fetchUserProfile,
+  updateMember,
 };

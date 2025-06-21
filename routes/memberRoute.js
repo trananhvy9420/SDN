@@ -2,7 +2,7 @@ const express = require("express");
 const memberRoute = express.Router();
 const member = require("../models/member");
 const memberController = require("../controllers/member.controller");
-const { query } = require("express-validator");
+const { query, param } = require("express-validator");
 const {
   registerRules,
   validate,
@@ -31,5 +31,14 @@ memberRoute
     protectedRoute,
     isAdmin,
     memberController.fetchAllMember
+  );
+memberRoute
+  .route("/updateprofile/:id")
+  .put(
+    [param("id").notEmpty().withMessage("ID is required")],
+    registerRules(),
+    validate,
+    protectedRoute,
+    memberController.updateMember
   );
 module.exports = memberRoute;

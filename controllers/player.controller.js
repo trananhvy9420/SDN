@@ -59,23 +59,19 @@ const getPlayerById = async (req, res) => {
   try {
     const id = req.query.id;
     const player = await Player.findById(id);
-
     if (!player) {
       return res
         .status(404)
         .json({ message: "Player not found with that ID." });
     }
-
     return res.status(200).json({ message: "Player found", data: player });
   } catch (error) {
     console.log("Error fetching player by ID:", error);
-
     return res
       .status(500)
       .json({ message: "Server error or invalid ID format." });
   }
 };
-
 module.exports = {
   findAllPlayer,
   foundPlayer,

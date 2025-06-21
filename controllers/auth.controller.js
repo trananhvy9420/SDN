@@ -80,7 +80,7 @@ const signUp = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 12);
     const newMember = new Member({
       membername: membername,
-      password: password,
+      password: hashedPassword,
       name: name,
       YOB: YOB,
     });
@@ -100,7 +100,17 @@ const signUp = async (req, res) => {
       .json({ message: "An error occurred during registration." });
   }
 };
+const fetchUserProfile = async (req, res) => {
+  // Middleware `protect` đã xác thực và gắn user vào req.
+  // Chúng ta chỉ việc lấy thông tin từ req.user và trả về.
+  const userProfile = req.member;
+  res.status(200).json({
+    message: "User profile fetched successfully",
+    data: userProfile,
+  });
+};
 module.exports = {
   signIn,
   signUp,
+  fetchUserProfile,
 };

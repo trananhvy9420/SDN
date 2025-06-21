@@ -6,9 +6,11 @@ const {
   registerRules,
   validate,
   loginRules,
+  protect,
 } = require("../middlewares/validation.middleware");
 memberRoute.route("/login").post(loginRules(), memberController.signIn);
 memberRoute
   .route("/register")
   .post(registerRules(), validate, memberController.signUp);
+memberRoute.route("/me").get(protect, memberController.fetchUserProfile);
 module.exports = memberRoute;

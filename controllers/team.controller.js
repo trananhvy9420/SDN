@@ -1,4 +1,5 @@
 const Team = require("../models/team");
+//Lay All Team
 const findAllTeam = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -38,6 +39,29 @@ const findAllTeam = async (req, res) => {
       .json({ message: "Error fetching players from database." });
   }
 };
+//Create Team
+const createTeam = async (req, res) => {
+  const { teamName } = req.body;
+  try {
+    const newTeamName = new Team({
+      teamName: teamName,
+    });
+    const savedTeam = await newTeamName.save();
+    const response = {
+      message: "Create team successfully",
+      team: {
+        teamName: teamName,
+      },
+    };
+    return res.status(201).json(response);
+  } catch (error) {
+    console.error("Registration Error: " + error);
+    return res
+      .status(500)
+      .json({ message: "An error occurred during registration." });
+  }
+};
 module.exports = {
   findAllTeam,
+  createTeam,
 };

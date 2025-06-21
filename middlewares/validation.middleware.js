@@ -54,16 +54,12 @@ const protectedRoute = async (req, res, next) => {
   ) {
     try {
       token = req.headers.authorization.split(" ")[1];
-
       const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-
       req.member = await Member.findById(decoded.id).select("-password");
-
       if (!req.member) {
         return res.status(401).json({ message: "Member not found" });
       }
 
-      // Nếu mọi thứ hợp lệ, cho phép request đi tiếp đến controller
       next();
     } catch (error) {
       console.error(error);

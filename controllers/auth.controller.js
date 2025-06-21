@@ -2,15 +2,13 @@ const Member = require("../models/member");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-exports.signIn = async (req, res) => {
+const signIn = async (req, res) => {
   const { membername, password } = req.body;
-
   if (!membername || !password) {
     return res
       .status(400)
       .json({ message: "Username and password are required." });
   }
-
   try {
     const member = await Member.findOne({ membername });
 
@@ -55,7 +53,7 @@ exports.signIn = async (req, res) => {
       .json({ message: "An error occurred on the server." });
   }
 };
-exports.signUp = async (req, res) => {
+const signUp = async (req, res) => {
   const { membername, password, name, YOB } = req.body;
   // if (!membername || !password || !name || !YOB) {
   //   return res.status(400).json({ message: "All fields are required." });
@@ -101,4 +99,8 @@ exports.signUp = async (req, res) => {
       .status(500)
       .json({ message: "An error occurred during registration." });
   }
+};
+module.exports = {
+  signIn,
+  signUp,
 };

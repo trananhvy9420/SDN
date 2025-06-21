@@ -1,5 +1,5 @@
 const express = require("express");
-const memberRouter = express.Router();
+const memberRoute = express.Router();
 const member = require("../models/member");
 const memberController = require("../controllers/auth.controller");
 const {
@@ -7,8 +7,8 @@ const {
   validate,
   loginRules,
 } = require("../middlewares/validation.middleware");
-memberRouter.route("/login").post(loginRules(), memberController.signIn);
-memberRouter
+memberRoute.route("/login").post(loginRules(), memberController.signIn);
+memberRoute
   .route("/register")
   .post(registerRules(), validate, memberController.signUp);
-module.exports = memberRouter;
+module.exports = memberRoute;

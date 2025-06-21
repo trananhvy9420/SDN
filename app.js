@@ -7,6 +7,8 @@ require("dotenv").config();
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 const memberRouter = require("./routes/memberRoute");
+const playerRouter = require("./routes/playerRoute");
+const teamRouter = require("./routes/teamRoute");
 const mongoose = require("mongoose");
 const Member = require("./models/member");
 const Player = require("./models/player");
@@ -34,6 +36,8 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/api/auth", memberRouter);
+app.use("/api/player", playerRouter);
+app.use("/api/team", teamRouter);
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));

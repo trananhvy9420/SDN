@@ -45,10 +45,9 @@ const validate = (req, res, next) => {
 
   return res.status(422).json({ errors: extractedErrors });
 };
-const protect = async (req, res, next) => {
+const protectedRoute = async (req, res, next) => {
   let token;
 
-  // 1. Đọc token từ header
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")
@@ -56,11 +55,8 @@ const protect = async (req, res, next) => {
     try {
       token = req.headers.authorization.split(" ")[1];
 
-      // 2. Xác thực token
-      // Sửa lại trong middleware `protect`
-      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET); // Phải khớp với key lúc sign
-      // 3. Lấy _id từ payload và tìm user, sau đó gắn vào req
-      // `-password` để loại bỏ trường password khỏi kết quả trả về
+      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
       req.member = await Member.findById(decoded.id).select("-password");
 
       if (!req.member) {
@@ -79,9 +75,19 @@ const protect = async (req, res, next) => {
     return res.status(401).json({ message: "Not authorized, no token" });
   }
 };
+const isAdmin = async (req, res, next) => {
+  if (req.member && req.member.isAdmin) {
+    next();
+  } else {
+    return res.status(403).json({
+      message: "Forbidden: You do not have permission to perform this action.",
+    });
+  }
+};
 module.exports = {
   validate,
   loginRules,
   registerRules,
-  protect,
+  protectedRoute,
+  isAdmin,
 };

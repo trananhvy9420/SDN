@@ -2,7 +2,12 @@ const express = require("express");
 const playerRoute = express.Router();
 const player = require("../models/player");
 const playerController = require("../controllers/player.controller");
-const { query } = require("express-validator");
+const { query, body, param } = require("express-validator");
+const { validate } = require("../middlewares/validation.middleware");
+const {
+  protectedRoute,
+  isAdmin,
+} = require("../middlewares/validation.middleware");
 playerRoute
   .route("/getAll")
   .get(
@@ -29,5 +34,36 @@ playerRoute
   .get(
     [query("id").trim().notEmpty().withMessage("Name must be filled")],
     playerController.getPlayerById
+  );
+playerRoute
+  .route("/")
+  .post(
+    [
+      body("playerName")
+        .trim()
+        .notEmpty()
+        .withMessage("playerName must be required"),
+      body("image").trim().notEmpty().withMessage("image must be required"),
+      body("cost").trim().notEmpty().withMessage("cost must be required"),
+      body("isCaptain")
+        .notEmpty()
+        .isBoolean()
+        .withMessage("isCaptain must be a boolean (true or false)"),
+
+      body("team").trim().notEmpty().withMessage("team must be required"),
+    ],
+    validate,
+    protectedRoute,
+    isAdmin,
+    playerController.createPlayer
+  );
+playerRoute
+  .route("/:playerId")
+  .put(
+    [param("playerId").trim().notEmpty().withMessage("ID must be required")],
+    validate,
+    protectedRoute,
+    isAdmin,
+    playerController.updatePlayer
   );
 module.exports = playerRoute;

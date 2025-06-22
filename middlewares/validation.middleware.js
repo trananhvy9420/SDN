@@ -47,7 +47,6 @@ const validate = (req, res, next) => {
 };
 const protectedRoute = async (req, res, next) => {
   let token;
-
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")
@@ -59,7 +58,6 @@ const protectedRoute = async (req, res, next) => {
       if (!req.member) {
         return res.status(401).json({ message: "Member not found" });
       }
-
       next();
     } catch (error) {
       console.error(error);

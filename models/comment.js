@@ -6,7 +6,7 @@ const commentSchema = new schema(
     content: { type: String, require: true },
     author: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Members",
+      ref: "Member",
       require: true,
     },
   },

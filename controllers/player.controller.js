@@ -72,8 +72,95 @@ const getPlayerById = async (req, res) => {
       .json({ message: "Server error or invalid ID format." });
   }
 };
+const createPlayer = async (req, res) => {
+  const { playerName, image, cost, isCaptain, information, team } = req.body;
+  try {
+    const newPlayer = new Player({
+      playerName: playerName,
+      image: image,
+      cost: cost,
+      isCaptain: isCaptain,
+      information: information,
+      team: team,
+    });
+    const savedPlayer = await newPlayer.save();
+    const response = {
+      message: "Create player successfully",
+      data: {
+        playerName: playerName,
+        image: image,
+        cost: cost,
+        isCaptain: isCaptain,
+        information: information,
+        team: team,
+      },
+    };
+    res.status(201).json(response);
+  } catch (error) {
+    console.log("Error creating player by ID:", error);
+    return res
+      .status(500)
+      .json({ message: "Server error or invalid ID format." });
+  }
+};
+const updatePlayer = async (req, res) => {
+  const id = req.params.playerId;
+  const updateData = {};
+  const allowedFields = [
+    "playerName",
+    "image",
+    "cost",
+    "isCaptain",
+    "information",
+    "team",
+  ];
+
+  // Vòng lặp để chỉ lấy các trường được phép cập nhật
+  for (const field of allowedFields) {
+    // Chỉ thêm vào updateData nếu trường đó tồn tại trong req.body
+    if (req.body[field] !== undefined) {
+      updateData[field] = req.body[field];
+    }
+  }
+
+  // Kiểm tra xem có dữ liệu để update không
+  if (Object.keys(updateData).length === 0) {
+    return res
+      .status(400)
+      .json({ message: "No valid fields provided for update." });
+  }
+
+  try {
+    const updatedPlayer = await Player.findByIdAndUpdate(
+      id,
+      updateData, // <--- SỬA Ở ĐÂY: Truyền thẳng object updateData
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedPlayer) {
+      return res.status(404).json({ message: "Player not found." });
+    }
+
+    const response = {
+      message: "Updated player successfully",
+      data: updatedPlayer,
+    };
+    return res.status(200).json(response);
+  } catch (error) {
+    console.log("Error updating player by ID:", error);
+    // Xử lý lỗi cụ thể hơn
+    if (error.name === "CastError") {
+      return res.status(400).json({ message: "Invalid ID format." });
+    }
+    return res
+      .status(500)
+      .json({ message: "An internal server error occurred." });
+  }
+};
 module.exports = {
   findAllPlayer,
   foundPlayer,
   getPlayerById,
+  updatePlayer,
+  createPlayer,
 };

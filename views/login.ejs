@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %></title>
+    <link href="/css/output.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  </head>
+  <body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-lg max-w-sm w-full">
+      <div class="flex justify-center mb-6">
+        <span class="inline-block bg-gray-200 rounded-full p-3">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+          >
+            <path
+              fill="currentColor"
+              d="M12 4a4 4 0 1 1 0 8a4 4 0 0 1 0-8M6.5 14a5.5 5.5 0 0 0-4.86 8.16L1.5 22.5l.16-.14A5.5 5.5 0 0 0 6.5 14m11 0a5.5 5.5 0 0 0-4.86 8.16l-.14.14l.16.14a5.5 5.5 0 0 0 4.84-8.3z"
+            />
+          </svg>
+        </span>
+      </div>
+      <h2 class="text-2xl font-semibold text-center mb-4">
+        Đăng nhập tài khoản
+      </h2>
+      <p class="text-gray-600 text-center mb-6">
+        Chào mừng trở lại! Vui lòng nhập thông tin của bạn.
+      </p>
+
+      <form id="login-form" method="POST">
+        <div class="mb-4">
+          <label for="email" class="block text-gray-700 text-sm font-bold mb-2"
+            >Membername</label
+          >
+          <input
+            type=""
+            id="membername"
+            name="membername"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Input Membername"
+            required
+          />
+        </div>
+
+        <div class="mb-4">
+          <label
+            for="password"
+            class="block text-gray-700 text-sm font-bold mb-2"
+            >Mật khẩu</label
+          >
+          <input
+            type="password"
+            id="password"
+            name="password"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="********"
+            required
+          />
+        </div>
+
+        <div
+          id="error-message"
+          class="text-red-500 text-sm mb-4 text-center"
+        ></div>
+
+        <button
+          type="submit"
+          class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-300"
+        >
+          Đăng Nhập
+        </button>
+      </form>
+    </div>
+  </body>
+  <script>
+    // Lấy ra form và khu vực báo lỗi
+    const loginForm = document.getElementById('login-form');
+    const errorMessageDiv = document.getElementById('error-message');
+
+    // Bắt sự kiện khi người dùng nhấn nút submit
+    loginForm.addEventListener('submit', async (event) => {
+        // Ngăn chặn hành vi mặc định của form (tải lại trang)
+        event.preventDefault();
+
+        // Xóa thông báo lỗi cũ
+        errorMessageDiv.textContent = '';
+
+        // Lấy giá trị từ các ô input
+        const membername = document.getElementById('membername').value;
+        const password = document.getElementById('password').value;
+
+        try {
+            // Gửi request POST đến API bằng Axios
+            // Dữ liệu gửi đi là một object chứa email và password
+            const response = await axios.post('/api/auth', {
+                membername: membername,
+                password: password,
+            });
+
+            // XỬ LÝ KHI ĐĂNG NHẬP THÀNH CÔNG
+            console.log('Đăng nhập thành công:', response.data);
+
+            // Ví dụ: Lưu token vào localStorage và chuyển hướng
+            // const token = response.data.token; // Giả sử server trả về token
+            // localStorage.setItem('accessToken', token);
+            
+            alert('Đăng nhập thành công!');
+            localStorage.setItem("access_token",response.data.access_token)
+            localStorage.setItem("refresh_token",response.data.refresh_token)
+            // Chuyển hướng đến trang dashboard hoặc trang chính
+            window.location.href = '/user'; // Hoặc '/dashboard'
+
+        } catch (error) {
+            // XỬ LÝ KHI ĐĂNG NHẬP THẤT BẠI
+            console.error('Lỗi đăng nhập:', error);
+            
+            // Hầu hết các lỗi từ server sẽ nằm trong error.response.data
+            if (error.response && error.response.data && error.response.data.message) {
+                // Hiển thị thông báo lỗi mà server trả về
+                errorMessageDiv.textContent = error.response.data.message;
+            } else {
+                // Hiển thị một lỗi chung chung
+                errorMessageDiv.textContent = 'Đã có lỗi xảy ra. Vui lòng thử lại.';
+            }
+        }
+    });
+</script>
+</body> 
+</html>

@@ -223,6 +223,26 @@ const addComment = async (req, res) => {
       .json({ message: "An internal server error occurred." });
   }
 };
+const fetchCommentWithPlayerID = async (req, res) => {
+  const id = req.params.playerId;
+  try {
+    const player = await Player.findById(id);
+    if (!player) {
+      return res.status(404).json({ message: "Player not found" });
+    }
+    const comment = player.comments;
+    return res.status(201).json({
+      message: "Find comment successfully",
+      data: comment,
+    });
+  } catch (error) {
+    console.error("Error adding comment:", error);
+    console.error("Message:", error.message);
+    return res
+      .status(500)
+      .json({ message: "An internal server error occurred." });
+  }
+};
 module.exports = {
   findAllPlayer,
   foundPlayer,
@@ -230,4 +250,5 @@ module.exports = {
   updatePlayer,
   createPlayer,
   addComment,
+  fetchCommentWithPlayerID,
 };

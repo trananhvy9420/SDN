@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lỗi <%= error.status || 500 %></title>
+    <link href="/css/output.css" rel="stylesheet" />
+  </head>
+  <body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div
+      class="text-center p-8 bg-white shadow-lg rounded-lg max-w-4xl mx-auto"
+    >
+      <h1 class="text-6xl font-bold text-red-500">
+        <%= error.status || 500 %>
+      </h1>
+      <h2 class="text-2xl font-semibold mt-4"><%= message %></h2>
+      <p class="text-gray-600 mt-2">
+        Đã có lỗi xảy ra trong quá trình xử lý yêu cầu của bạn.
+      </p>
+
+      <% if (error.stack) { %>
+      <div class="mt-6 text-left">
+        <h3 class="font-bold">Chi tiết lỗi (dành cho developer):</h3>
+        <pre
+          class="mt-2 text-xs bg-gray-200 p-4 rounded overflow-auto font-mono"
+        ><code><%= error.stack %></code></pre>
+      </div>
+      <% } %>
+
+      <a
+        href="/"
+        class="mt-8 inline-block bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+      >
+        Quay về trang chủ
+      </a>
+    </div>
+  </body>
+</html>

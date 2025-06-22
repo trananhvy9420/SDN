@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %></title>
+    <link href="/css/output.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  </head>
+  <body class="bg-gray-100">
+    <%- include('partials/header', { isLoggedIn: true }) %>
+
+    <div class="container mx-auto p-4 md:p-8">
+      <h1 class="text-4xl font-bold text-gray-800 mb-8">Hồ Sơ Của Bạn</h1>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="bg-white p-6 rounded-lg shadow-md">
+          <h2 class="text-2xl font-semibold mb-4 border-b pb-2">
+            Thông tin cá nhân
+          </h2>
+          <form id="profile-form">
+            <div class="mb-4">
+              <label for="membername" class="block text-gray-700 font-bold mb-2"
+                >Tên đăng nhập:</label
+              >
+              <input
+                type="text"
+                id="membername"
+                class="w-full p-2 border rounded bg-gray-200"
+                readonly
+              />
+            </div>
+            <div class="mb-4">
+              <label for="name" class="block text-gray-700 font-bold mb-2"
+                >Tên hiển thị:</label
+              >
+              <input
+                type="text"
+                id="name"
+                name="name"
+                class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div class="mb-4">
+              <label for="yob" class="block text-gray-700 font-bold mb-2"
+                >Năm sinh:</label
+              >
+              <input
+                type="date"
+                id="YOB"
+                name="YOB"
+                class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div id="profile-message" class="text-sm mb-4 text-center"></div>
+            <button
+              type="submit"
+              class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+            >
+              Cập nhật thông tin
+            </button>
+          </form>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-md">
+          <h2 class="text-2xl font-semibold mb-4 border-b pb-2">
+            Đổi mật khẩu
+          </h2>
+          <form id="password-form">
+            <div class="mb-4">
+              <label
+                for="currentPassword"
+                class="block text-gray-700 font-bold mb-2"
+                >Mật khẩu hiện tại:</label
+              >
+              <input
+                type="password"
+                id="currentPassword"
+                class="w-full p-2 border rounded"
+                required
+              />
+            </div>
+            <div class="mb-4">
+              <label
+                for="newPassword"
+                class="block text-gray-700 font-bold mb-2"
+                >Mật khẩu mới:</label
+              >
+              <input
+                type="password"
+                id="newPassword"
+                class="w-full p-2 border rounded"
+                required
+              />
+            </div>
+            <div class="mb-4">
+              <label
+                for="confirmPassword"
+                class="block text-gray-700 font-bold mb-2"
+                >Xác nhận mật khẩu mới:</label
+              >
+              <input
+                type="password"
+                id="confirmPassword"
+                class="w-full p-2 border rounded"
+                required
+              />
+            </div>
+            <div id="password-message" class="text-sm mb-4 text-center"></div>
+            <button
+              type="submit"
+              class="w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
+            >
+              Đổi mật khẩu
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function formatDateForInput(isoDateString) {
+        if (!isoDateString) {
+          return ""; // Trả về rỗng nếu không có ngày
+        }
+
+        // Tạo một đối tượng Date từ chuỗi ISO
+        const date = new Date(isoDateString);
+
+        // Lấy năm, tháng, ngày
+        const year = date.getFullYear();
+
+        // getMonth() trả về từ 0-11, nên phải +1
+        // padStart(2, '0') để đảm bảo luôn có 2 chữ số (ví dụ: 01, 02, ... 12)
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+
+        // getDate() trả về ngày trong tháng
+        const day = date.getDate().toString().padStart(2, "0");
+
+        // Trả về chuỗi theo định dạng mà <input type="date"> yêu cầu
+        return `${year}-${month}-${day}`;
+      }
+      const token = localStorage.getItem("access_token");
+
+      // Hàm chạy ngay khi trang được tải xong
+      document.addEventListener("DOMContentLoaded", async () => {
+        if (!token) {
+          // Nếu không có token, chuyển về trang login
+          alert("Vui lòng đăng nhập để xem trang này.");
+          window.location.href = "/login";
+          return;
+        }
+
+        try {
+          // Dùng Axios gọi API /api/member/me để lấy thông tin user
+          const response = await axios.get("/api/member/me", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          const member = response.data.data;
+
+          // Lấy thông tin và điền vào form
+          document.getElementById("membername").value = member.membername;
+          document.getElementById("name").value = member.name;
+          document.getElementById("YOB").value =
+            formatDateForInput(member.YOB) || "";
+        } catch (error) {
+          console.error("Không thể lấy thông tin profile:", error);
+          alert(
+            "Phiên làm việc đã hết hạn hoặc có lỗi. Vui lòng đăng nhập lại."
+          );
+          // Xóa token cũ và chuyển về trang login
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          window.location.href = "/login";
+        }
+      });
+
+      // --- Xử lý form cập nhật thông tin (Giữ nguyên như cũ) ---
+      const profileForm = document.getElementById("profile-form");
+      const profileMessage = document.getElementById("profile-message");
+      profileForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        // ... code cập nhật profile của bạn giữ nguyên ...
+        const name = document.getElementById("name").value;
+        const YOB = document.getElementById("yob").value;
+        try {
+          await axios.put(
+            "/api/member/updateprofile",
+            { name, YOB },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          profileMessage.textContent = "Cập nhật thành công!";
+          profileMessage.className = "text-sm mb-4 text-center text-green-500";
+        } catch (error) {
+          profileMessage.textContent =
+            error.response?.data?.message || "Có lỗi xảy ra.";
+          profileMessage.className = "text-sm mb-4 text-center text-red-500";
+        }
+      });
+
+      // --- Xử lý form đổi mật khẩu (Giữ nguyên như cũ) ---
+      const passwordForm = document.getElementById("password-form");
+      const passwordMessage = document.getElementById("password-message");
+      passwordForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        // ... code đổi mật khẩu của bạn giữ nguyên ...
+        const currentPassword =
+          document.getElementById("currentPassword").value;
+        const newPassword = document.getElementById("newPassword").value;
+        const confirmPassword =
+          document.getElementById("confirmPassword").value;
+
+        if (newPassword !== confirmPassword) {
+          passwordMessage.textContent = "Mật khẩu mới không khớp!";
+          passwordMessage.className = "text-sm mb-4 text-center text-red-500";
+          return;
+        }
+        try {
+          await axios.put(
+            "/api/member/updatepassword",
+            { currentPassword, newPassword },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          passwordMessage.textContent = "Đổi mật khẩu thành công!";
+          passwordMessage.className = "text-sm mb-4 text-center text-green-500";
+          passwordForm.reset();
+          passwordForm.querySelector('button[type="submit"]').disabled = true;
+          localStorage.clear();
+          setTimeout(() => {
+            window.location.href = "/"; // Chuyển về trang dashboard
+          }, 3000); // 3000 milliseconds = 3 giây
+        } catch (error) {
+          passwordMessage.textContent =
+            error.response?.data?.message || "Có lỗi xảy ra.";
+          passwordMessage.className = "text-sm mb-4 text-center text-red-500";
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -47,6 +47,7 @@ const validate = (req, res, next) => {
 };
 const protectedRoute = async (req, res, next) => {
   let token;
+
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")
@@ -54,21 +55,24 @@ const protectedRoute = async (req, res, next) => {
     try {
       token = req.headers.authorization.split(" ")[1];
       const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
       req.member = await Member.findById(decoded.id).select("-password");
+
       if (!req.member) {
         return res.status(401).json({ message: "Member not found" });
       }
-      next();
+
+      return next(); // Quan trọng: gọi next khi tất cả hợp lệ
     } catch (error) {
       console.error(error);
       return res.status(401).json({ message: "Not authorized, token failed" });
     }
   }
 
-  if (!token) {
-    return res.status(401).json({ message: "Not authorized, no token" });
-  }
+  // Nếu không có header hoặc không đúng định dạng Bearer
+  return res.status(401).json({ message: "Not authorized, no token" });
 };
+
 const isAdmin = async (req, res, next) => {
   if (req.member && req.member.isAdmin) {
     next();

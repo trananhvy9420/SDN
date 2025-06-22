@@ -10,6 +10,7 @@ const authRouter = require("./routes/authRoute");
 const memberRouter = require("./routes/memberRoute");
 const playerRouter = require("./routes/playerRoute");
 const teamRouter = require("./routes/teamRoute");
+const commentRouter = require("./routes/commentRoute");
 const mongoose = require("mongoose");
 const Member = require("./models/member");
 const Player = require("./models/player");
@@ -17,29 +18,68 @@ const Team = require("./models/team");
 const Comment = require("./models/comment");
 const connect = require("./db/connect");
 const port = process.env.PORT || 3000;
+// CÁCH VIẾT ĐÚNG: Dấu ngoặc nhọn sẽ chỉ "bóc" lấy đúng hàm có tên là protectedRoute ra khỏi file
+const { protectedRoute } = require("./middlewares/validation.middleware");
 connect.then((db) => {
   console.log("Connected to DB successfully!");
   console.log("PORT" + port);
 });
 
 var app = express();
-
+app.use(express.static(path.join(__dirname, "public")));
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
-app.set("view engine", "jade");
-
+app.set("view engine", "ejs");
+app.use(express.static(path.join(__dirname, "public")));
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, "public")));
 
+app.get("/login", (req, res) => {
+  res.render("login", { title: "Trang Đăng Nhập" });
+});
+app.get("/user", async (req, res, next) => {
+  // Thêm async ở đây
+  try {
+    // Lấy tất cả cầu thủ từ database
+    const players = await Player.find({});
+
+    // Render file 'views/user.ejs' và truyền biến 'players' sang
+    res.render("user", {
+      title: "Danh sách cầu thủ",
+      players: players, // players ở đây là một mảng các object cầu thủ
+    });
+  } catch (error) {
+    console.error("Failed to fetch players for user page:", error);
+    next(error); // Chuyển lỗi đến error handler
+  }
+});
+// Sửa lại route /profile trong app.js
+app.get("/profile", (req, res) => {
+  // Chỉ cần render một trang tĩnh, không cần truyền dữ liệu member nữa
+  res.render("profile", {
+    title: "Trang cá nhân",
+    isLoggedIn: true, // Vẫn truyền để header hiển thị đúng
+    member: {}, // Truyền vào một object rỗng để EJS không bị lỗi
+  });
+});
+app.get("/", (req, res) => {
+  res.redirect("/login");
+});
+app.get("/profile", (req, res) => {
+  res.redirect("/profile");
+});
+app.get("/user", (req, res) => {
+  res.redirect("/user");
+});
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/member", memberRouter);
 app.use("/api/player", playerRouter);
 app.use("/api/team", teamRouter);
+app.use("/api/comment", commentRouter);
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));
@@ -55,5 +95,7 @@ app.use(function (err, req, res, next) {
   res.status(err.status || 500);
   res.render("error");
 });
-
+app.listen(port, () => {
+  console.log(`Server is listening on port ${port}`);
+});
 module.exports = app;

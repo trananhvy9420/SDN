@@ -55,13 +55,13 @@ const fetchAllMember = async (req, res) => {
       .json({ message: "Error fetching players from database." });
   }
 };
-const updateMember = async (req, res) => {
-  const teamID = req.params.id;
-  const { membername, password, name, YOB } = req.body;
+const updateProfile = async (req, res) => {
+  const teamID = req.member.id;
+
+  const { membername, name, YOB } = req.body;
   try {
     const updatedMember = await Member.findByIdAndUpdate(teamID, {
       membername: membername,
-      password: password,
       name: name,
       YOB: YOB,
     });
@@ -72,7 +72,6 @@ const updateMember = async (req, res) => {
       message: "Updated member successfully",
       data: {
         membername: membername,
-        password: password,
         name: name,
         YOB: YOB,
       },
@@ -85,8 +84,42 @@ const updateMember = async (req, res) => {
       .json({ message: "An error occurred during registration." });
   }
 };
+const updatePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  const memberId = req.member.id;
+  try {
+    const member = await Member.findById(memberId);
+    if (!member) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Kiểm tra mật khẩu hiện tại có đúng không
+    const isMatch = await bcrypt.compare(currentPassword, member.password);
+    if (!isMatch) {
+      return res
+        .status(400)
+        .json({ message: "Mật khẩu hiện tại không chính xác." });
+    }
+
+    // Băm mật khẩu mới
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Cập nhật mật khẩu mới vào DB
+    member.password = hashedPassword;
+    await member.save();
+
+    return res.status(200).json({ message: "Password updated successfully." });
+  } catch (error) {
+    console.error("Update Password Error: " + error);
+    return res
+      .status(500)
+      .json({ message: "An error occurred during password update." });
+  }
+};
 module.exports = {
   fetchAllMember,
   fetchUserProfile,
-  updateMember,
+  updateProfile,
+  updatePassword,
 };

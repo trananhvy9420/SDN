@@ -2,7 +2,7 @@ const express = require("express");
 const memberRoute = express.Router();
 const member = require("../models/member");
 const memberController = require("../controllers/member.controller");
-const { query, param } = require("express-validator");
+const { query, param, body } = require("express-validator");
 const {
   registerRules,
   validate,
@@ -33,12 +33,22 @@ memberRoute
     memberController.fetchAllMember
   );
 memberRoute
-  .route("/updateprofile/:id")
+  .route("/updateprofile")
+  .put(validate, protectedRoute, memberController.updateProfile);
+memberRoute
+  .route("/updatepassword")
   .put(
-    [param("id").notEmpty().withMessage("ID is required")],
-    registerRules(),
+    protectedRoute,
+    [
+      body("currentPassword")
+        .notEmpty()
+        .withMessage("Current password is required"),
+      body("newPassword")
+        .isLength({ min: 6 })
+        .withMessage("New password must be at least 6 characters long"),
+    ],
     validate,
     protectedRoute,
-    memberController.updateMember
+    memberController.updatePassword
   );
 module.exports = memberRoute;

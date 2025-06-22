@@ -80,4 +80,12 @@ playerRoute
     protectedRoute,
     playerController.addComment,
   ]);
+playerRoute
+  .route("/:playerId/comment")
+  .get([
+    [param("playerId").isMongoId().withMessage("Invalid Player ID format.")],
+    validate,
+    protectedRoute,
+    playerController.fetchCommentWithPlayerID,
+  ]);
 module.exports = playerRoute;

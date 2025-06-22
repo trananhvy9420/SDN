@@ -66,4 +66,18 @@ playerRoute
     isAdmin,
     playerController.updatePlayer
   );
+playerRoute
+  .route("/:playerId/add-comment")
+  .post([
+    [
+      param("playerId").isMongoId().withMessage("Invalid Player ID format."),
+      body("rating")
+        .isInt({ min: 1, max: 3 })
+        .withMessage("Rating must be a number between 1 and 3."),
+      body("content").trim().notEmpty().withMessage("Content cannot be empty."),
+    ],
+    validate,
+    protectedRoute,
+    playerController.addComment,
+  ]);
 module.exports = playerRoute;

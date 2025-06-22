@@ -1,5 +1,5 @@
 const Player = require("../models/player");
-
+const Comment = require("../models/comment");
 const findAllPlayer = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -86,14 +86,7 @@ const createPlayer = async (req, res) => {
     const savedPlayer = await newPlayer.save();
     const response = {
       message: "Create player successfully",
-      data: {
-        playerName: playerName,
-        image: image,
-        cost: cost,
-        isCaptain: isCaptain,
-        information: information,
-        team: team,
-      },
+      data: savedPlayer,
     };
     res.status(201).json(response);
   } catch (error) {
@@ -157,10 +150,84 @@ const updatePlayer = async (req, res) => {
       .json({ message: "An internal server error occurred." });
   }
 };
+// const addComment = async (req, res) => {
+//   const member = req.member;
+//   const id = req.params.playerId;
+//   try {
+//     const player = await Player.findById(id);
+//     if (!player) {
+//       return res.status(404).json({ message: "Player not found" });
+//     }
+//     const a = {
+//       rating: req.body.rating,
+//       content: req.body.content,
+//       author: req.member._id,
+//     };
+//     console.log(a);
+//     const newComment = new Comment({
+//       rating: req.body.rating,
+//       content: req.body.content,
+//       author: req.member._id,
+//     });
+//     const savedComment = await newComment.save();
+//     player.comments.push(a);
+//     const savedPlayer = await player.save();
+//     const addedComment = savedPlayer.comments[savedPlayer.comments.length - 1];
+//     return res.status(201).json({
+//       message: "Comment added successfully!",
+//       data: addedComment,
+//     });
+//   } catch (error) {
+//     console.error("Error adding comment:", error);
+//     return res
+//       .status(500)
+//       .json({ message: "An internal server error occurred." });
+//   }
+// };
+const addComment = async (req, res) => {
+  const id = req.params.playerId;
+
+  try {
+    const player = await Player.findById(id);
+    if (!player) {
+      return res.status(404).json({ message: "Player not found" });
+    }
+
+    const newComment = {
+      rating: req.body.rating,
+      content: req.body.content,
+      author: req.member._id,
+    };
+    const a = new Comment({
+      rating: req.body.rating,
+      content: req.body.content,
+      author: req.member._id,
+    });
+    const savedComment = await a.save();
+    player.comments.push(newComment);
+
+    const savedPlayer = await player.save();
+
+    const addedComment = savedPlayer.comments[savedPlayer.comments.length - 1];
+
+    return res.status(201).json({
+      message: "Comment added successfully!",
+      data: addedComment,
+      comment: a,
+    });
+  } catch (error) {
+    console.error("Error adding comment:", error);
+    console.error("Message:", error.message);
+    return res
+      .status(500)
+      .json({ message: "An internal server error occurred." });
+  }
+};
 module.exports = {
   findAllPlayer,
   foundPlayer,
   getPlayerById,
   updatePlayer,
   createPlayer,
+  addComment,
 };

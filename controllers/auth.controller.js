@@ -33,8 +33,8 @@ const signIn = async (req, res) => {
 
       return res.status(200).json({
         message: "Login successful!",
-        accessToken: accessToken,
-        refreshToken: refreshToken,
+        access_token: accessToken,
+        refresh_token: refreshToken,
         member: {
           id: member._id,
           membername: member.membername,

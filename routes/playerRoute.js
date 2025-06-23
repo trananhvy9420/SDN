@@ -88,4 +88,12 @@ playerRoute
     protectedRoute,
     playerController.fetchCommentWithPlayerID,
   ]);
+playerRoute
+  .route("/:playerId/delete")
+  .delete(
+    [param("playerId").isMongoId().withMessage("Invalid Player ID format.")],
+    validate,
+    protectedRoute,
+    playerController.deletePlayer
+  );
 module.exports = playerRoute;

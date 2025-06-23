@@ -243,6 +243,26 @@ const fetchCommentWithPlayerID = async (req, res) => {
       .json({ message: "An internal server error occurred." });
   }
 };
+const deletePlayer = async (req, res) => {
+  const id = req.params.playerId;
+  try {
+    const player = await Player.findByIdAndDelete(id);
+    if (!player) {
+      return res.status(404).json({ message: "Player not found" });
+    }
+    const response = {
+      message: "Delete this player successfully",
+      data: player,
+    };
+    return res.status(200).json(response);
+  } catch (error) {
+    console.error("Error deleting player:", error);
+    console.error("Message:", error.message);
+    return res
+      .status(500)
+      .json({ message: "An internal server error occurred." });
+  }
+};
 module.exports = {
   findAllPlayer,
   foundPlayer,
@@ -251,4 +271,5 @@ module.exports = {
   createPlayer,
   addComment,
   fetchCommentWithPlayerID,
+  deletePlayer,
 };

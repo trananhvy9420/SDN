@@ -64,9 +64,23 @@ app.get("/profile", (req, res) => {
     member: {}, // Truyền vào một object rỗng để EJS không bị lỗi
   });
 });
+app.get("/profileAdmin", (req, res) => {
+  // Chỉ cần render một trang tĩnh, không cần truyền dữ liệu member nữa
+  res.render("profileAdmin", {
+    title: "Trang cá nhân của admin",
+    isLoggedIn: true, // Vẫn truyền để header hiển thị đúng
+    member: {}, // Truyền vào một object rỗng để EJS không bị lỗi
+  });
+});
 app.get("/admin", (req, res) => {
   res.render("admin", {
     title: "Trang admin",
+    isLoggedIn: true,
+  });
+});
+app.get("/players", (req, res) => {
+  res.render("players", {
+    title: "Danh sách cầu thủ",
     isLoggedIn: true,
   });
 });
@@ -76,11 +90,17 @@ app.get("/", (req, res) => {
 app.get("/profile", (req, res) => {
   res.redirect("/profile");
 });
+app.get("/profileAdmin", (req, res) => {
+  res.redirect("/profileAdmin");
+});
 app.get("/user", (req, res) => {
   res.redirect("/user");
 });
 app.get("/admin", (req, res) => {
   res.redirect("/admin");
+});
+app.get("/players", (req, res) => {
+  res.redirect("/players");
 });
 app.use("/", indexRouter);
 app.use("/users", usersRouter);

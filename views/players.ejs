@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin - Quản lý Cầu thủ</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Axios for making HTTP requests -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .modal-backdrop {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 40;
+        justify-content: center;
+        align-items: center;
+      }
+      .modal {
+        transform: scale(0.95);
+        opacity: 0;
+        transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      .modal-backdrop.flex {
+        display: flex;
+      }
+      .modal-backdrop.flex .modal {
+        transform: scale(1);
+        opacity: 1;
+      }
+      table img {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 50%;
+      }
+      .info-cell {
+        max-width: 200px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 text-gray-800">
+    <%- include('partials/headerAdmin', { isLoggedIn: true }) %>
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+      <header class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">
+          Bảng điều khiển quản lý Cầu thủ
+        </h1>
+      </header>
+
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <div
+          class="flex flex-col sm:flex-row justify-between items-center mb-6"
+        >
+          <h2 class="text-2xl font-semibold text-gray-800 mb-4 sm:mb-0">
+            Danh sách Cầu thủ
+          </h2>
+          <button
+            id="openCreateModalBtn"
+            class="w-full sm:w-auto bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center"
+          >
+            <i class="fas fa-plus mr-2"></i> Tạo Cầu thủ mới
+          </button>
+        </div>
+
+        <!-- Table to display players -->
+        <div class="overflow-x-auto">
+          <table class="min-w-full bg-white border border-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th
+                  class="text-left py-3 px-4 font-semibold text-gray-600 border-b"
+                >
+                  Ảnh
+                </th>
+                <th
+                  class="text-left py-3 px-4 font-semibold text-gray-600 border-b"
+                >
+                  Tên Cầu thủ
+                </th>
+                <th
+                  class="text-left py-3 px-4 font-semibold text-gray-600 border-b"
+                >
+                  Thông tin
+                </th>
+                <th
+                  class="text-left py-3 px-4 font-semibold text-gray-600 border-b"
+                >
+                  Giá
+                </th>
+                <th
+                  class="text-left py-3 px-4 font-semibold text-gray-600 border-b"
+                >
+                  Đội
+                </th>
+                <th
+                  class="text-center py-3 px-4 font-semibold text-gray-600 border-b"
+                >
+                  Đội trưởng
+                </th>
+                <th
+                  class="text-center py-3 px-4 font-semibold text-gray-600 border-b"
+                >
+                  Hành động
+                </th>
+              </tr>
+            </thead>
+            <tbody id="playerTableBody">
+              <!-- Player rows will be inserted here -->
+            </tbody>
+          </table>
+          <div
+            id="no-data-message"
+            class="text-center py-10 text-gray-500 hidden"
+          >
+            <p>Không tìm thấy cầu thủ nào.</p>
+          </div>
+        </div>
+        <!-- Pagination controls -->
+        <div
+          id="paginationControls"
+          class="flex justify-between items-center mt-6"
+        ></div>
+      </div>
+    </div>
+
+    <!-- Create/Update Player Modal -->
+    <div id="playerModal" class="modal-backdrop">
+      <div
+        class="modal bg-white rounded-lg shadow-xl w-11/12 md:max-w-2xl mx-auto p-6"
+      >
+        <h3 id="modalTitle" class="text-xl font-semibold mb-6">
+          Tạo Cầu thủ mới
+        </h3>
+        <form id="playerForm">
+          <input type="hidden" id="playerId" />
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label
+                for="playerName"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >Tên Cầu thủ</label
+              >
+              <input
+                type="text"
+                id="playerName"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label
+                for="cost"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >Giá</label
+              >
+              <input
+                type="number"
+                id="cost"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div class="md:col-span-2">
+              <label
+                for="image"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >URL Hình ảnh</label
+              >
+              <input
+                type="text"
+                id="image"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div class="md:col-span-2">
+              <label
+                for="information"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >Thông tin</label
+              >
+              <textarea
+                id="information"
+                rows="3"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              ></textarea>
+            </div>
+            <div>
+              <label
+                for="team"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >Đội</label
+              >
+              <select
+                id="team"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <!-- Team options will be populated here -->
+              </select>
+            </div>
+            <div class="flex items-center justify-start mt-2">
+              <input
+                type="checkbox"
+                id="isCaptain"
+                class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label for="isCaptain" class="ml-2 block text-sm text-gray-900"
+                >Là đội trưởng?</label
+              >
+            </div>
+          </div>
+          <div
+            id="modalApiError"
+            class="text-red-500 text-sm my-4 text-center"
+          ></div>
+          <div class="mt-6 flex justify-end space-x-3">
+            <button
+              type="button"
+              id="cancelModalBtn"
+              class="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              id="savePlayerBtn"
+              class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Lưu
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteConfirmModal" class="modal-backdrop">
+      <div
+        class="modal bg-white rounded-lg shadow-xl w-11/12 md:max-w-md mx-auto p-6"
+      >
+        <h3 class="text-xl font-semibold mb-2">Xác nhận xóa</h3>
+        <p class="text-gray-600 mb-6">
+          Bạn có chắc chắn muốn xóa cầu thủ này không?
+        </p>
+        <div class="flex justify-end space-x-3">
+          <button
+            id="cancelDeleteBtn"
+            class="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300"
+          >
+            Hủy
+          </button>
+          <button
+            id="confirmDeleteBtn"
+            class="bg-red-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-700"
+          >
+            Xóa
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // API URLs
+        const PLAYER_API_URL = "/api/player";
+        const TEAM_API_URL = "/api/team";
+
+        // DOM Elements
+        const playerTableBody = document.getElementById("playerTableBody");
+        const openCreateModalBtn =
+          document.getElementById("openCreateModalBtn");
+        const playerModal = document.getElementById("playerModal");
+        const deleteConfirmModal =
+          document.getElementById("deleteConfirmModal");
+        const cancelModalBtn = document.getElementById("cancelModalBtn");
+        const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
+        const playerForm = document.getElementById("playerForm");
+        const modalTitle = document.getElementById("modalTitle");
+        const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+        const paginationControls =
+          document.getElementById("paginationControls");
+        const noDataMessage = document.getElementById("no-data-message");
+        const modalApiError = document.getElementById("modalApiError");
+
+        // Form Fields
+        const playerIdInput = document.getElementById("playerId");
+        const playerNameInput = document.getElementById("playerName");
+        const imageInput = document.getElementById("image");
+        const costInput = document.getElementById("cost");
+        const isCaptainInput = document.getElementById("isCaptain");
+        const informationInput = document.getElementById("information");
+        const teamSelect = document.getElementById("team");
+
+        let playerToDeleteId = null;
+        let currentPage = 1;
+        const limit = 10;
+        let playersDataCache = {}; // Cache to hold full player data for updates
+        let teamsCache = {}; // Cache for team ID to team Name mapping
+
+        // --- Axios Instance with Auth Header ---
+        const getAuthToken = () => localStorage.getItem("access_token");
+        const api = axios.create();
+        api.interceptors.request.use(
+          (config) => {
+            const token = getAuthToken();
+            if (token) {
+              config.headers.Authorization = `Bearer ${token}`;
+            }
+            return config;
+          },
+          (error) => Promise.reject(error)
+        );
+
+        // --- API Functions ---
+        const fetchPlayers = async (page = 1) => {
+          try {
+            const response = await api.get(
+              `${PLAYER_API_URL}/getAll?page=${page}&limit=${limit}`
+            );
+            const result = response.data;
+            renderTable(result.data || []);
+            renderPagination(result.pagination || {});
+            currentPage = page;
+          } catch (error) {
+            handleApiError(error, "Không thể tải danh sách cầu thủ.");
+          }
+        };
+
+        const fetchTeams = async () => {
+          try {
+            // Assuming /api/team fetches all teams if no pagination is provided
+            const response = await api.get(TEAM_API_URL);
+            const teams = response.data.data || [];
+            populateTeamSelect(teams);
+            // Populate the cache for team name lookup
+            teamsCache = teams.reduce((acc, team) => {
+              acc[team._id] = team.teamName;
+              return acc;
+            }, {});
+          } catch (error) {
+            handleApiError(error, "Không thể tải danh sách đội.");
+          }
+        };
+
+        const savePlayer = async (playerData) => {
+          const playerId = playerIdInput.value;
+          const method = playerId ? "put" : "post";
+          const url = playerId
+            ? `${PLAYER_API_URL}/${playerId}`
+            : PLAYER_API_URL;
+
+          try {
+            await api({ method, url, data: playerData });
+            closeModal(playerModal);
+            fetchPlayers(currentPage);
+          } catch (error) {
+            modalApiError.textContent =
+              error.response?.data?.message || "Lưu cầu thủ thất bại.";
+          }
+        };
+
+        const deletePlayer = async (id) => {
+          try {
+            // NOTE: The backend needs a route like DELETE /api/player/delete/:id
+            await api.delete(`/api/player/${id}/delete`);
+            closeModal(deleteConfirmModal);
+            fetchPlayers(currentPage);
+          } catch (error) {
+            handleApiError(
+              error,
+              "Xóa cầu thủ thất bại. Vui lòng kiểm tra lại route ở backend."
+            );
+          }
+        };
+
+        // --- UI Rendering & Helpers ---
+        const renderTable = (players) => {
+          playerTableBody.innerHTML = "";
+          playersDataCache = {};
+          if (!players || players.length === 0) {
+            noDataMessage.classList.remove("hidden");
+            return;
+          }
+          noDataMessage.classList.add("hidden");
+          players.forEach((player) => {
+            playersDataCache[player._id] = player; // Cache data
+            const teamName = teamsCache[player.team] || "N/A"; // Use cache to get team name
+            const row = document.createElement("tr");
+            row.className = "hover:bg-gray-50";
+            row.innerHTML = `
+                        <td class="py-2 px-4 border-b"><img src="${
+                          player.image
+                        }" alt="${
+              player.playerName
+            }" onerror="this.onerror=null;this.src='https://placehold.co/100x100/EFEFEF/AAAAAA&text=N/A';"></td>
+                        <td class="py-3 px-4 border-b font-medium">${
+                          player.playerName
+                        }</td>
+                        <td class="py-3 px-4 border-b info-cell" title="${
+                          player.information
+                        }">${player.information}</td>
+                        <td class="py-3 px-4 border-b">${player.cost.toLocaleString(
+                          "vi-VN"
+                        )}</td>
+                        <td class="py-3 px-4 border-b">${teamName}</td>
+                        <td class="py-3 px-4 border-b text-center">${
+                          player.isCaptain
+                            ? '<i class="fas fa-check-circle text-green-500"></i>'
+                            : '<i class="fas fa-times-circle text-red-500"></i>'
+                        }</td>
+                        <td class="py-3 px-4 border-b text-center">
+                            <button class="update-btn text-blue-500 hover:text-blue-700 mr-4" data-id="${
+                              player._id
+                            }"><i class="fas fa-edit"></i></button>
+                            <button class="delete-btn text-red-500 hover:text-red-700" data-id="${
+                              player._id
+                            }"><i class="fas fa-trash"></i></button>
+                        </td>
+                    `;
+            playerTableBody.appendChild(row);
+          });
+        };
+
+        const populateTeamSelect = (teams) => {
+          teamSelect.innerHTML = '<option value="">-- Chọn đội --</option>';
+          if (!teams) return;
+          teams.forEach((team) => {
+            const option = document.createElement("option");
+            option.value = team._id;
+            option.textContent = team.teamName;
+            teamSelect.appendChild(option);
+          });
+        };
+
+        const renderPagination = (pagination) => {
+          paginationControls.innerHTML = "";
+          if (!pagination || pagination.totalPages <= 1) return;
+          paginationControls.innerHTML = `
+                    <button class="px-3 py-1 rounded ${
+                      pagination.currentPage === 1
+                        ? "bg-gray-200 cursor-not-allowed"
+                        : "bg-white hover:bg-gray-100"
+                    }" data-page="${pagination.currentPage - 1}" ${
+            pagination.currentPage === 1 ? "disabled" : ""
+          }>Trước</button>
+                    <span class="px-4 text-sm">Trang ${
+                      pagination.currentPage
+                    } / ${pagination.totalPages}</span>
+                    <button class="px-3 py-1 rounded ${
+                      pagination.currentPage === pagination.totalPages
+                        ? "bg-gray-200 cursor-not-allowed"
+                        : "bg-white hover:bg-gray-100"
+                    }" data-page="${pagination.currentPage + 1}" ${
+            pagination.currentPage === pagination.totalPages ? "disabled" : ""
+          }>Sau</button>
+                `;
+        };
+
+        const handleApiError = (error, defaultMessage) => {
+          console.error(error);
+          let message = defaultMessage;
+          if (
+            error.response?.status === 401 ||
+            error.response?.status === 403
+          ) {
+            message = "Lỗi xác thực. Vui lòng đăng nhập lại.";
+          }
+          playerTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-red-500">${message}</td></tr>`;
+        };
+
+        // --- Modal Handling ---
+        const openModal = (modal) => modal.classList.add("flex");
+        const closeModal = (modal) => modal.classList.remove("flex");
+
+        const openCreateForm = () => {
+          playerForm.reset();
+          playerIdInput.value = "";
+          modalTitle.textContent = "Tạo Cầu thủ mới";
+          modalApiError.textContent = "";
+          openModal(playerModal);
+        };
+
+        const openUpdateForm = (id) => {
+          const player = playersDataCache[id];
+          if (!player) return;
+          playerForm.reset();
+          modalTitle.textContent = "Cập nhật Cầu thủ";
+          modalApiError.textContent = "";
+
+          playerIdInput.value = player._id;
+          playerNameInput.value = player.playerName;
+          imageInput.value = player.image;
+          costInput.value = player.cost;
+          informationInput.value = player.information;
+          isCaptainInput.checked = player.isCaptain;
+          teamSelect.value = player.team || ""; // Set dropdown to the player's team ID
+
+          openModal(playerModal);
+        };
+
+        // --- Event Listeners ---
+        openCreateModalBtn.addEventListener("click", openCreateForm);
+        cancelModalBtn.addEventListener("click", () => closeModal(playerModal));
+        cancelDeleteBtn.addEventListener("click", () =>
+          closeModal(deleteConfirmModal)
+        );
+        confirmDeleteBtn.addEventListener("click", () => {
+          if (playerToDeleteId) deletePlayer(playerToDeleteId);
+        });
+
+        playerForm.addEventListener("submit", (e) => {
+          e.preventDefault();
+          const formData = {
+            playerName: playerNameInput.value,
+            image: imageInput.value,
+            cost: parseInt(costInput.value),
+            information: informationInput.value,
+            isCaptain: isCaptainInput.checked,
+            team: teamSelect.value,
+          };
+          savePlayer(formData);
+        });
+
+        document.body.addEventListener("click", (e) => {
+          const updateBtn = e.target.closest(".update-btn");
+          const deleteBtn = e.target.closest(".delete-btn");
+          const paginationBtn = e.target.closest("#paginationControls button");
+
+          if (updateBtn) openUpdateForm(updateBtn.dataset.id);
+          if (deleteBtn) {
+            playerToDeleteId = deleteBtn.dataset.id;
+            openModal(deleteConfirmModal);
+          }
+          if (paginationBtn && !paginationBtn.disabled) {
+            fetchPlayers(parseInt(paginationBtn.dataset.page));
+          }
+        });
+
+        // --- Initial calls ---
+        const initializePage = async () => {
+          if (!getAuthToken()) {
+            playerTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-red-500">Không tìm thấy token. Vui lòng đăng nhập.</td></tr>`;
+            return;
+          }
+          try {
+            await fetchTeams(); // Wait for teams to be fetched and cached
+            await fetchPlayers(); // Now fetch players
+          } catch (error) {
+            console.error("Initialization failed:", error);
+            // Error is already handled in the respective fetch functions
+          }
+        };
+
+        initializePage();
+      });
+    </script>
+  </body>
+</html>

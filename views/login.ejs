@@ -3,131 +3,323 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><%= title %></title>
-    <link href="/css/output.css" rel="stylesheet" />
+    <title>Xác thực người dùng</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   </head>
   <body class="bg-gray-100 flex items-center justify-center min-h-screen">
     <div class="bg-white p-8 rounded-lg shadow-lg max-w-sm w-full">
-      <div class="flex justify-center mb-6">
-        <span class="inline-block bg-gray-200 rounded-full p-3">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-          >
-            <path
-              fill="currentColor"
-              d="M12 4a4 4 0 1 1 0 8a4 4 0 0 1 0-8M6.5 14a5.5 5.5 0 0 0-4.86 8.16L1.5 22.5l.16-.14A5.5 5.5 0 0 0 6.5 14m11 0a5.5 5.5 0 0 0-4.86 8.16l-.14.14l.16.14a5.5 5.5 0 0 0 4.84-8.3z"
+      <!-- Login Form -->
+      <div id="login-section">
+        <div class="flex justify-center mb-6">
+          <span class="inline-block bg-gray-200 rounded-full p-3">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+            >
+              <path
+                fill="currentColor"
+                d="M12 4a4 4 0 1 1 0 8a4 4 0 0 1 0-8M6.5 14a5.5 5.5 0 0 0-4.86 8.16L1.5 22.5l.16-.14A5.5 5.5 0 0 0 6.5 14m11 0a5.5 5.5 0 0 0-4.86 8.16l-.14.14l.16.14a5.5 5.5 0 0 0 4.84-8.3z"
+              />
+            </svg>
+          </span>
+        </div>
+        <h2 class="text-2xl font-semibold text-center mb-4">
+          Đăng nhập tài khoản
+        </h2>
+        <p class="text-gray-600 text-center mb-6">
+          Chào mừng trở lại! Vui lòng nhập thông tin của bạn.
+        </p>
+        <form id="login-form">
+          <div class="mb-4">
+            <label
+              for="login-membername"
+              class="block text-gray-700 text-sm font-bold mb-2"
+              >Tên thành viên</label
+            >
+            <input
+              type="text"
+              id="login-membername"
+              name="membername"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Nhập tên thành viên"
+              required
             />
-          </svg>
-        </span>
+          </div>
+          <div class="mb-4">
+            <label
+              for="login-password"
+              class="block text-gray-700 text-sm font-bold mb-2"
+              >Mật khẩu</label
+            >
+            <input
+              type="password"
+              id="login-password"
+              name="password"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="********"
+              required
+            />
+          </div>
+          <div
+            id="login-error-message"
+            class="text-red-500 text-sm mb-4 text-center"
+          ></div>
+          <button
+            type="submit"
+            class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-300"
+          >
+            Đăng Nhập
+          </button>
+        </form>
+        <p class="text-center text-sm text-gray-600 mt-4">
+          Chưa có tài khoản?
+          <button
+            id="show-register-btn"
+            class="font-medium text-blue-600 hover:text-blue-500"
+          >
+            Đăng ký ngay
+          </button>
+        </p>
       </div>
-      <h2 class="text-2xl font-semibold text-center mb-4">
-        Đăng nhập tài khoản
-      </h2>
-      <p class="text-gray-600 text-center mb-6">
-        Chào mừng trở lại! Vui lòng nhập thông tin của bạn.
-      </p>
 
-      <form id="login-form" method="POST">
-        <div class="mb-4">
-          <label for="email" class="block text-gray-700 text-sm font-bold mb-2"
-            >Membername</label
-          >
-          <input
-            type=""
-            id="membername"
-            name="membername"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Input Membername"
-            required
-          />
+      <!-- Register Form (Hidden by default) -->
+      <div id="register-section" class="hidden">
+        <div class="flex justify-center mb-6">
+          <span class="inline-block bg-gray-200 rounded-full p-3">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+            >
+              <path
+                fill="currentColor"
+                d="M12 4a4 4 0 0 1 4 4a4 4 0 0 1-4 4a4 4 0 0 1-4-4a4 4 0 0 1 4-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4"
+              />
+            </svg>
+          </span>
         </div>
-
-        <div class="mb-4">
-          <label
-            for="password"
-            class="block text-gray-700 text-sm font-bold mb-2"
-            >Mật khẩu</label
+        <h2 class="text-2xl font-semibold text-center mb-4">
+          Tạo tài khoản mới
+        </h2>
+        <p class="text-gray-600 text-center mb-6">
+          Điền thông tin của bạn để bắt đầu.
+        </p>
+        <form id="register-form">
+          <div class="mb-4">
+            <label
+              for="register-membername"
+              class="block text-gray-700 text-sm font-bold mb-2"
+              >Tên thành viên</label
+            >
+            <input
+              type="text"
+              id="register-membername"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="VD: user123"
+              required
+            />
+          </div>
+          <div class="mb-4">
+            <label
+              for="register-name"
+              class="block text-gray-700 text-sm font-bold mb-2"
+              >Họ và tên</label
+            >
+            <input
+              type="text"
+              id="register-name"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="VD: Nguyễn Văn A"
+              required
+            />
+          </div>
+          <div class="mb-4">
+            <label
+              for="register-yob"
+              class="block text-gray-700 text-sm font-bold mb-2"
+              >Ngày sinh</label
+            >
+            <input
+              type="date"
+              id="register-yob"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <div class="mb-4">
+            <label
+              for="register-password"
+              class="block text-gray-700 text-sm font-bold mb-2"
+              >Mật khẩu</label
+            >
+            <input
+              type="password"
+              id="register-password"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="********"
+              required
+            />
+          </div>
+          <div
+            id="register-error-message"
+            class="text-red-500 text-sm mb-4 text-center"
+          ></div>
+          <button
+            type="submit"
+            class="w-full bg-green-500 text-white py-2 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-300"
           >
-          <input
-            type="password"
-            id="password"
-            name="password"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="********"
-            required
-          />
-        </div>
-
-        <div
-          id="error-message"
-          class="text-red-500 text-sm mb-4 text-center"
-        ></div>
-
-        <button
-          type="submit"
-          class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-300"
-        >
-          Đăng Nhập
-        </button>
-      </form>
+            Đăng Ký
+          </button>
+        </form>
+        <p class="text-center text-sm text-gray-600 mt-4">
+          Đã có tài khoản?
+          <button
+            id="show-login-btn"
+            class="font-medium text-blue-600 hover:text-blue-500"
+          >
+            Đăng nhập ngay
+          </button>
+        </p>
+      </div>
     </div>
-  </body>
-  <script>
-    // Lấy ra form và khu vực báo lỗi
-    const loginForm = document.getElementById('login-form');
-    const errorMessageDiv = document.getElementById('error-message');
 
-    // Bắt sự kiện khi người dùng nhấn nút submit
-    loginForm.addEventListener('submit', async (event) => {
-        // Ngăn chặn hành vi mặc định của form (tải lại trang)
-        event.preventDefault();
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        // Sections and Forms
+        const loginSection = document.getElementById("login-section");
+        const registerSection = document.getElementById("register-section");
+        const loginForm = document.getElementById("login-form");
+        const registerForm = document.getElementById("register-form");
 
-        // Xóa thông báo lỗi cũ
-        errorMessageDiv.textContent = '';
+        // Buttons to toggle forms
+        const showRegisterBtn = document.getElementById("show-register-btn");
+        const showLoginBtn = document.getElementById("show-login-btn");
 
-        // Lấy giá trị từ các ô input
-        const membername = document.getElementById('membername').value;
-        const password = document.getElementById('password').value;
+        // Error message divs
+        const loginErrorDiv = document.getElementById("login-error-message");
+        const registerErrorDiv = document.getElementById(
+          "register-error-message"
+        );
 
-        try {
-            // Gửi request POST đến API bằng Axios
-            // Dữ liệu gửi đi là một object chứa email và password
-            const response = await axios.post('/api/auth', {
-                membername: membername,
-                password: password,
+        // --- Toggle Forms ---
+        showRegisterBtn.addEventListener("click", () => {
+          loginSection.classList.add("hidden");
+          registerSection.classList.remove("hidden");
+        });
+
+        showLoginBtn.addEventListener("click", () => {
+          registerSection.classList.add("hidden");
+          loginSection.classList.remove("hidden");
+        });
+
+        // --- Login Handler ---
+        loginForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          loginErrorDiv.textContent = ""; // Clear old errors
+
+          const membername = document.getElementById("login-membername").value;
+          const password = document.getElementById("login-password").value;
+
+          try {
+            const response = await axios.post("/api/auth", {
+              membername,
+              password,
             });
 
-            // XỬ LÝ KHI ĐĂNG NHẬP THÀNH CÔNG
-            console.log('Đăng nhập thành công:', response.data);
+            // On successful login, save tokens and redirect
+            localStorage.setItem("access_token", response.data.access_token);
+            localStorage.setItem("refresh_token", response.data.refresh_token);
 
-            // Ví dụ: Lưu token vào localStorage và chuyển hướng
-            // const token = response.data.token; // Giả sử server trả về token
-            // localStorage.setItem('accessToken', token);
-            
-            alert('Đăng nhập thành công!');
-            localStorage.setItem("access_token",response.data.access_token)
-            localStorage.setItem("refresh_token",response.data.refresh_token)
-            // Chuyển hướng đến trang dashboard hoặc trang chính
-            window.location.href = '/user'; // Hoặc '/dashboard'
-
-        } catch (error) {
-            // XỬ LÝ KHI ĐĂNG NHẬP THẤT BẠI
-            console.error('Lỗi đăng nhập:', error);
-            
-            // Hầu hết các lỗi từ server sẽ nằm trong error.response.data
-            if (error.response && error.response.data && error.response.data.message) {
-                // Hiển thị thông báo lỗi mà server trả về
-                errorMessageDiv.textContent = error.response.data.message;
+            if (response.data.member.isAdmin === true) {
+              window.location.href = "/admin";
             } else {
-                // Hiển thị một lỗi chung chung
-                errorMessageDiv.textContent = 'Đã có lỗi xảy ra. Vui lòng thử lại.';
+              window.location.href = "/user";
             }
-        }
-    });
-</script>
-</body> 
+          } catch (error) {
+            // Handle login failure
+            console.error("Lỗi đăng nhập:", error);
+            if (
+              error.response &&
+              error.response.data &&
+              error.response.data.message
+            ) {
+              loginErrorDiv.textContent = error.response.data.message;
+            } else {
+              loginErrorDiv.textContent = "Đã có lỗi xảy ra. Vui lòng thử lại.";
+            }
+          }
+        });
+
+        // --- Register Handler ---
+        registerForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          registerErrorDiv.textContent = ""; // Clear old errors
+
+          const membername = document.getElementById(
+            "register-membername"
+          ).value;
+          const name = document.getElementById("register-name").value;
+          const YOB = document.getElementById("register-yob").value;
+          const password = document.getElementById("register-password").value;
+
+          try {
+            const response = await axios.post("/api/auth/register", {
+              membername,
+              password,
+              name,
+              YOB,
+            });
+
+            // ✅ Thành công thì tiếp tục login
+            const loginResponse = await axios.post("/api/auth", {
+              membername,
+              password,
+            });
+
+            localStorage.setItem(
+              "access_token",
+              loginResponse.data.access_token
+            );
+            localStorage.setItem(
+              "refresh_token",
+              loginResponse.data.refresh_token
+            );
+            window.location.href = "/user";
+          } catch (error) {
+            console.error("Lỗi đăng ký:", error);
+
+            if (
+              error.response &&
+              error.response.data &&
+              error.response.data.errors
+            ) {
+              // ⛔ Trường hợp lỗi validation (422)
+              const errorMessages = error.response.data.errors.map((err) => {
+                const key = Object.keys(err)[0];
+                return err[key]; // Lấy nội dung lỗi như "Membername must be at least 10 characters"
+              });
+              window.alert(errorMessages.join("\n"));
+              registerErrorDiv.textContent = errorMessages.join(" ");
+            } else if (
+              error.response &&
+              error.response.data &&
+              error.response.data.message
+            ) {
+              // ⛔ Các lỗi khác có `message`
+              window.alert(error.response.data.message);
+              registerErrorDiv.textContent = error.response.data.message;
+            } else {
+              window.alert("Đã có lỗi xảy ra. Vui lòng thử lại.");
+              registerErrorDiv.textContent =
+                "Đã có lỗi xảy ra. Vui lòng thử lại.";
+            }
+          }
+        });
+      });
+    </script>
+  </body>
 </html>

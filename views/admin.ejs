@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin - Quản lý đội</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Axios for making HTTP requests -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+      /* Custom styles */
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .modal-backdrop {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 40;
+        justify-content: center;
+        align-items: center;
+      }
+      .modal {
+        transform: scale(0.95);
+        opacity: 0;
+        transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+      }
+      .modal-backdrop.flex {
+        display: flex;
+      }
+      .modal-backdrop.flex .modal {
+        transform: scale(1);
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 text-gray-800">
+    <%- include('partials/header', { isLoggedIn: true }) %>
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+      <header class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">
+          Bảng điều khiển quản lý đội
+        </h1>
+        <p class="text-gray-600 mt-1">
+          Nơi tập trung để quản lý tất cả các đội của bạn.
+        </p>
+      </header>
+
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <div
+          class="flex flex-col sm:flex-row justify-between items-center mb-6"
+        >
+          <h2 class="text-2xl font-semibold text-gray-800 mb-4 sm:mb-0">
+            Danh sách đội
+          </h2>
+          <!-- Button to open the Create Team Modal -->
+          <button
+            id="openCreateModalBtn"
+            class="w-full sm:w-auto bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center"
+          >
+            <i class="fas fa-plus mr-2"></i> Tạo đội mới
+          </button>
+        </div>
+
+        <!-- Table to display teams -->
+        <div class="overflow-x-auto">
+          <table class="min-w-full bg-white border border-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th
+                  class="text-left py-3 px-4 font-semibold text-gray-600 border-b"
+                >
+                  Tên đội
+                </th>
+                <th
+                  class="text-left py-3 px-4 font-semibold text-gray-600 border-b"
+                >
+                  Ngày tạo
+                </th>
+                <th
+                  class="text-center py-3 px-4 font-semibold text-gray-600 border-b"
+                >
+                  Hành động
+                </th>
+              </tr>
+            </thead>
+            <tbody id="teamTableBody">
+              <!-- Team rows will be inserted here by JavaScript -->
+            </tbody>
+          </table>
+          <div
+            id="no-teams-message"
+            class="text-center py-10 text-gray-500 hidden"
+          >
+            <p>Không tìm thấy đội nào. Bắt đầu bằng cách tạo một đội mới!</p>
+          </div>
+        </div>
+        <!-- Pagination controls -->
+        <div
+          id="paginationControls"
+          class="flex justify-between items-center mt-6"
+        >
+          <!-- Pagination will be rendered here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Create/Update Modal -->
+    <div id="teamModal" class="modal-backdrop">
+      <div
+        class="modal bg-white rounded-lg shadow-xl w-11/12 md:max-w-md mx-auto p-6"
+      >
+        <h3 id="modalTitle" class="text-xl font-semibold mb-4">Tạo đội</h3>
+        <form id="teamForm">
+          <input type="hidden" id="teamId" />
+          <div>
+            <label
+              for="teamName"
+              class="block text-sm font-medium text-gray-700 mb-1"
+              >Tên đội</label
+            >
+            <input
+              type="text"
+              id="teamName"
+              name="teamName"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+            <p id="teamNameError" class="text-red-500 text-xs mt-1 hidden">
+              Tên đội không được để trống.
+            </p>
+            <p id="modalApiError" class="text-red-500 text-xs mt-2 hidden"></p>
+          </div>
+          <div class="mt-6 flex justify-end space-x-3">
+            <button
+              type="button"
+              id="cancelModalBtn"
+              class="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              id="saveTeamBtn"
+              class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Lưu
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteConfirmModal" class="modal-backdrop">
+      <div
+        class="modal bg-white rounded-lg shadow-xl w-11/12 md:max-w-md mx-auto p-6"
+      >
+        <h3 class="text-xl font-semibold mb-2">Xác nhận xóa</h3>
+        <p class="text-gray-600 mb-6">
+          Bạn có chắc chắn muốn xóa đội này không? Hành động này không thể được
+          hoàn tác.
+        </p>
+        <div class="flex justify-end space-x-3">
+          <button
+            id="cancelDeleteBtn"
+            class="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+          >
+            Hủy
+          </button>
+          <button
+            id="confirmDeleteBtn"
+            class="bg-red-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Xóa
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // API Base URL
+        const API_URL = "/api/team";
+
+        // DOM Elements
+        const tableBody = document.getElementById("teamTableBody");
+        const openCreateModalBtn =
+          document.getElementById("openCreateModalBtn");
+        const teamModal = document.getElementById("teamModal");
+        const deleteConfirmModal =
+          document.getElementById("deleteConfirmModal");
+        const cancelModalBtn = document.getElementById("cancelModalBtn");
+        const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
+        const teamForm = document.getElementById("teamForm");
+        const modalTitle = document.getElementById("modalTitle");
+        const teamIdInput = document.getElementById("teamId");
+        const teamNameInput = document.getElementById("teamName");
+        const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+        const paginationControls =
+          document.getElementById("paginationControls");
+        const noTeamsMessage = document.getElementById("no-teams-message");
+        const teamNameError = document.getElementById("teamNameError");
+        const modalApiError = document.getElementById("modalApiError");
+
+        let teamToDeleteId = null;
+        let currentPage = 1;
+        const limit = 10;
+
+        // --- API Functions ---
+
+        /**
+         * Fetches teams from the API with pagination using Axios.
+         * @param {number} page - The page number to fetch.
+         * @param {number} limit - The number of items per page.
+         */
+        const fetchTeams = async (page = 1, limit = 10) => {
+          const token = localStorage.getItem("access_token");
+          if (!token) {
+            tableBody.innerHTML = `<tr><td colspan="3" class="text-center py-10 text-red-500">Lỗi: Không tìm thấy Access Token. Vui lòng đăng nhập lại.</td></tr>`;
+            noTeamsMessage.classList.add("hidden");
+            paginationControls.innerHTML = "";
+            return;
+          }
+
+          try {
+            const response = await axios.get(
+              `${API_URL}?page=${page}&limit=${limit}`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            );
+            const result = response.data; // Axios wraps the response body in `data`
+            renderTable(result.data || []);
+            renderPagination(result.pagination || {});
+            currentPage = page;
+          } catch (error) {
+            console.error("Error fetching teams:", error);
+            let errorMessage =
+              "Không thể tải danh sách đội. Vui lòng kiểm tra console.";
+            if (
+              error.response &&
+              (error.response.status === 401 || error.response.status === 403)
+            ) {
+              errorMessage =
+                "Lỗi xác thực: Bạn không có quyền xem nội dung này. Vui lòng đăng nhập với tư cách quản trị viên.";
+            }
+            tableBody.innerHTML = `<tr><td colspan="3" class="text-center py-10 text-red-500">${errorMessage}</td></tr>`;
+            noTeamsMessage.classList.add("hidden");
+            paginationControls.innerHTML = "";
+          }
+        };
+
+        /**
+         * Creates or updates a team using Axios.
+         * @param {object} teamData - The data for the team.
+         */
+        const saveTeam = async (teamData) => {
+          const token = localStorage.getItem("access_token");
+          if (!token) {
+            modalApiError.textContent = "Lỗi xác thực. Vui lòng đăng nhập lại.";
+            modalApiError.classList.remove("hidden");
+            return;
+          }
+
+          const teamId = teamIdInput.value;
+          const method = teamId ? "put" : "post";
+          const url = teamId ? `${API_URL}/${teamId}` : API_URL;
+
+          try {
+            await axios({
+              method: method,
+              url: url,
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              data: teamData,
+            });
+            closeModal(teamModal);
+            fetchTeams(currentPage); // Refresh the table
+          } catch (error) {
+            console.error("Error saving team:", error);
+            modalApiError.textContent =
+              error.response?.data?.message || "Lưu đội thất bại.";
+            modalApiError.classList.remove("hidden");
+          }
+        };
+
+        /**
+         * Deletes a team by its ID using Axios.
+         * @param {string} id - The ID of the team to delete.
+         */
+        const deleteTeam = async (id) => {
+          const token = localStorage.getItem("access_token");
+          if (!token) {
+            // This error is less likely to be seen, but good practice
+            console.error("No token found for deletion.");
+            return;
+          }
+          try {
+            await axios.delete(`${API_URL}/delete/${id}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            closeModal(deleteConfirmModal);
+            if (tableBody.rows.length === 1 && currentPage > 1) {
+              fetchTeams(currentPage - 1);
+            } else {
+              fetchTeams(currentPage);
+            }
+          } catch (error) {
+            console.error("Error deleting team:", error);
+            // Could add a general error notification area on the main page
+          }
+        };
+
+        // --- UI Rendering ---
+
+        const renderTable = (teams) => {
+          tableBody.innerHTML = "";
+          if (!teams || teams.length === 0) {
+            noTeamsMessage.classList.remove("hidden");
+            paginationControls.innerHTML = ""; // Clear pagination if no teams
+            return;
+          }
+          noTeamsMessage.classList.add("hidden");
+          teams.forEach((team) => {
+            const row = document.createElement("tr");
+            row.className = "hover:bg-gray-50 transition-colors duration-200";
+            row.innerHTML = `
+                        <td class="py-3 px-4 border-b border-gray-200">${
+                          team.teamName
+                        }</td>
+                        <td class="py-3 px-4 border-b border-gray-200">${new Date(
+                          team.createdAt
+                        ).toLocaleDateString("vi-VN")}</td>
+                        <td class="py-3 px-4 border-b border-gray-200 text-center">
+                            <button class="update-btn text-blue-500 hover:text-blue-700 mr-4" data-id="${
+                              team._id
+                            }" data-name="${team.teamName}" title="Chỉnh sửa">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="delete-btn text-red-500 hover:text-red-700" data-id="${
+                              team._id
+                            }" title="Xóa">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+            tableBody.appendChild(row);
+          });
+        };
+
+        const renderPagination = (pagination) => {
+          paginationControls.innerHTML = "";
+          if (!pagination || pagination.totalPages <= 1) {
+            return;
+          }
+          const { currentPage, totalPages, totalRecords, limit } = pagination;
+          const startRecord = (currentPage - 1) * limit + 1;
+          const endRecord = Math.min(startRecord + limit - 1, totalRecords);
+
+          let paginationHTML = `
+                    <div class="text-sm text-gray-600">
+                        Hiển thị <span class="font-semibold">${startRecord}</span> đến <span class="font-semibold">${endRecord}</span> trong tổng số <span class="font-semibold">${totalRecords}</span> kết quả
+                    </div>
+                    <div class="flex items-center">
+                `;
+          paginationHTML += `<button class="pagination-btn ${
+            currentPage === 1
+              ? "opacity-50 cursor-not-allowed"
+              : "hover:bg-gray-200"
+          }" data-page="${currentPage - 1}" ${
+            currentPage === 1 ? "disabled" : ""
+          }><i class="fas fa-chevron-left"></i></button>`;
+          for (let i = 1; i <= totalPages; i++) {
+            paginationHTML += `<button class="pagination-btn ${
+              i === currentPage ? "bg-blue-600 text-white" : "hover:bg-gray-200"
+            }" data-page="${i}">${i}</button>`;
+          }
+          paginationHTML += `<button class="pagination-btn ${
+            currentPage === totalPages
+              ? "opacity-50 cursor-not-allowed"
+              : "hover:bg-gray-200"
+          }" data-page="${currentPage + 1}" ${
+            currentPage === totalPages ? "disabled" : ""
+          }><i class="fas fa-chevron-right"></i></button>`;
+          paginationHTML += "</div>";
+          paginationControls.innerHTML = paginationHTML;
+          const style =
+            document.head.querySelector("#pagination-style") ||
+            document.createElement("style");
+          style.id = "pagination-style";
+          style.innerHTML = `.pagination-btn { padding: 8px 12px; border: 1px solid #ddd; margin: 0 2px; border-radius: 4px; transition: background-color 0.2s, color 0.2s; font-weight: 500; }`;
+          document.head.appendChild(style);
+        };
+
+        // --- Modal Handling ---
+
+        const openModal = (modal) => modal.classList.add("flex");
+        const closeModal = (modal) => modal.classList.remove("flex");
+
+        openCreateModalBtn.addEventListener("click", () => {
+          teamForm.reset();
+          teamIdInput.value = "";
+          modalTitle.textContent = "Tạo đội mới";
+          teamNameError.classList.add("hidden");
+          modalApiError.classList.add("hidden");
+          openModal(teamModal);
+          teamNameInput.focus();
+        });
+
+        cancelModalBtn.addEventListener("click", () => closeModal(teamModal));
+        cancelDeleteBtn.addEventListener("click", () =>
+          closeModal(deleteConfirmModal)
+        );
+
+        window.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") {
+            closeModal(teamModal);
+            closeModal(deleteConfirmModal);
+          }
+        });
+
+        // --- Event Listeners ---
+
+        teamForm.addEventListener("submit", (e) => {
+          e.preventDefault();
+          const teamName = teamNameInput.value.trim();
+          if (!teamName) {
+            teamNameError.classList.remove("hidden");
+            return;
+          }
+          teamNameError.classList.add("hidden");
+          modalApiError.classList.add("hidden");
+          saveTeam({ teamName });
+        });
+
+        document.body.addEventListener("click", (e) => {
+          const updateBtn = e.target.closest(".update-btn");
+          const deleteBtn = e.target.closest(".delete-btn");
+          const paginationBtn = e.target.closest(".pagination-btn");
+
+          if (updateBtn) {
+            const id = updateBtn.dataset.id;
+            const name = updateBtn.dataset.name;
+            teamIdInput.value = id;
+            teamNameInput.value = name;
+            modalTitle.textContent = "Cập nhật đội";
+            teamNameError.classList.add("hidden");
+            modalApiError.classList.add("hidden");
+            openModal(teamModal);
+            teamNameInput.focus();
+          }
+
+          if (deleteBtn) {
+            teamToDeleteId = deleteBtn.dataset.id;
+            openModal(deleteConfirmModal);
+          }
+
+          if (paginationBtn && !paginationBtn.disabled) {
+            const page = parseInt(paginationBtn.dataset.page);
+            fetchTeams(page, limit);
+          }
+        });
+
+        confirmDeleteBtn.addEventListener("click", () => {
+          if (teamToDeleteId) {
+            deleteTeam(teamToDeleteId);
+          }
+        });
+
+        teamNameInput.addEventListener("input", () => {
+          if (teamNameInput.value.trim()) {
+            teamNameError.classList.add("hidden");
+          }
+        });
+
+        // Initial fetch on page load
+        fetchTeams(currentPage, limit);
+      });
+    </script>
+  </body>
+</html>

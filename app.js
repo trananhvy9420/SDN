@@ -64,6 +64,12 @@ app.get("/profile", (req, res) => {
     member: {}, // Truyền vào một object rỗng để EJS không bị lỗi
   });
 });
+app.get("/admin", (req, res) => {
+  res.render("admin", {
+    title: "Trang admin",
+    isLoggedIn: true,
+  });
+});
 app.get("/", (req, res) => {
   res.redirect("/login");
 });
@@ -72,6 +78,9 @@ app.get("/profile", (req, res) => {
 });
 app.get("/user", (req, res) => {
   res.redirect("/user");
+});
+app.get("/admin", (req, res) => {
+  res.redirect("/admin");
 });
 app.use("/", indexRouter);
 app.use("/users", usersRouter);

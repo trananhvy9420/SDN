@@ -4,21 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin - Quản lý Cầu thủ</title>
-    <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for icons -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <!-- Axios for making HTTP requests -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
       body {
@@ -75,20 +71,50 @@
 
       <div class="bg-white rounded-lg shadow-md p-6">
         <div
-          class="flex flex-col sm:flex-row justify-between items-center mb-6"
+          class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4"
         >
-          <h2 class="text-2xl font-semibold text-gray-800 mb-4 sm:mb-0">
-            Danh sách Cầu thủ
-          </h2>
-          <button
-            id="openCreateModalBtn"
-            class="w-full sm:w-auto bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center"
-          >
-            <i class="fas fa-plus mr-2"></i> Tạo Cầu thủ mới
-          </button>
+          <div class="w-full sm:w-auto">
+            <h2 class="text-2xl font-semibold text-gray-800">
+              Danh sách Cầu thủ
+            </h2>
+          </div>
+
+          <div class="w-full sm:w-1/2 lg:w-1/3">
+            <form id="searchForm" class="flex items-center">
+              <input
+                type="text"
+                id="searchInput"
+                placeholder="Tìm kiếm theo tên cầu thủ..."
+                class="w-full px-3 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                type="submit"
+                class="bg-blue-600 text-white px-4 py-2 rounded-r-lg hover:bg-blue-700 transition-colors"
+                title="Tìm kiếm"
+              >
+                <i class="fas fa-search"></i>
+              </button>
+              <button
+                type="button"
+                id="clearSearchBtn"
+                title="Xóa tìm kiếm"
+                class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors ml-2"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </form>
+          </div>
+
+          <div class="w-full sm:w-auto">
+            <button
+              id="openCreateModalBtn"
+              class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center"
+            >
+              <i class="fas fa-plus mr-2"></i> Tạo Cầu thủ mới
+            </button>
+          </div>
         </div>
 
-        <!-- Table to display players -->
         <div class="overflow-x-auto">
           <table class="min-w-full bg-white border border-gray-200">
             <thead class="bg-gray-50">
@@ -130,9 +156,7 @@
                 </th>
               </tr>
             </thead>
-            <tbody id="playerTableBody">
-              <!-- Player rows will be inserted here -->
-            </tbody>
+            <tbody id="playerTableBody"></tbody>
           </table>
           <div
             id="no-data-message"
@@ -141,7 +165,7 @@
             <p>Không tìm thấy cầu thủ nào.</p>
           </div>
         </div>
-        <!-- Pagination controls -->
+
         <div
           id="paginationControls"
           class="flex justify-between items-center mt-6"
@@ -149,7 +173,6 @@
       </div>
     </div>
 
-    <!-- Create/Update Player Modal -->
     <div id="playerModal" class="modal-backdrop">
       <div
         class="modal bg-white rounded-lg shadow-xl w-11/12 md:max-w-2xl mx-auto p-6"
@@ -222,9 +245,7 @@
                 id="team"
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
-              >
-                <!-- Team options will be populated here -->
-              </select>
+              ></select>
             </div>
             <div class="flex items-center justify-start mt-2">
               <input
@@ -261,7 +282,6 @@
       </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
     <div id="deleteConfirmModal" class="modal-backdrop">
       <div
         class="modal bg-white rounded-lg shadow-xl w-11/12 md:max-w-md mx-auto p-6"
@@ -292,6 +312,7 @@
         // API URLs
         const PLAYER_API_URL = "/api/player";
         const TEAM_API_URL = "/api/team";
+        const SEARCH_PLAYER_API_URL = "/api/player/search";
 
         // DOM Elements
         const playerTableBody = document.getElementById("playerTableBody");
@@ -310,6 +331,11 @@
         const noDataMessage = document.getElementById("no-data-message");
         const modalApiError = document.getElementById("modalApiError");
 
+        // Search form elements
+        const searchForm = document.getElementById("searchForm");
+        const searchInput = document.getElementById("searchInput");
+        const clearSearchBtn = document.getElementById("clearSearchBtn");
+
         // Form Fields
         const playerIdInput = document.getElementById("playerId");
         const playerNameInput = document.getElementById("playerName");
@@ -321,9 +347,9 @@
 
         let playerToDeleteId = null;
         let currentPage = 1;
-        const limit = 10;
-        let playersDataCache = {}; // Cache to hold full player data for updates
-        let teamsCache = {}; // Cache for team ID to team Name mapping
+        const limit = 8;
+        let playersDataCache = {};
+        let teamsCache = {};
 
         // --- Axios Instance with Auth Header ---
         const getAuthToken = () => localStorage.getItem("access_token");
@@ -354,13 +380,35 @@
           }
         };
 
+        const searchPlayerByName = async (playerName) => {
+          if (!playerName) {
+            fetchPlayers(1);
+            return;
+          }
+          try {
+            const response = await api.get(
+              `${SEARCH_PLAYER_API_URL}?playerName=${encodeURIComponent(
+                playerName
+              )}`
+            );
+            const foundPlayer = response.data.data;
+
+            renderTable(foundPlayer);
+            paginationControls.innerHTML = ""; // Hide pagination
+          } catch (error) {
+            renderTable([]);
+            handleApiError(
+              error,
+              `Không tìm thấy cầu thủ với tên "${playerName}".`
+            );
+          }
+        };
+
         const fetchTeams = async () => {
           try {
-            // Assuming /api/team fetches all teams if no pagination is provided
             const response = await api.get(TEAM_API_URL);
             const teams = response.data.data || [];
             populateTeamSelect(teams);
-            // Populate the cache for team name lookup
             teamsCache = teams.reduce((acc, team) => {
               acc[team._id] = team.teamName;
               return acc;
@@ -389,14 +437,13 @@
 
         const deletePlayer = async (id) => {
           try {
-            // NOTE: The backend needs a route like DELETE /api/player/delete/:id
             await api.delete(`/api/player/${id}/delete`);
             closeModal(deleteConfirmModal);
             fetchPlayers(currentPage);
           } catch (error) {
             handleApiError(
               error,
-              "Xóa cầu thủ thất bại. Vui lòng kiểm tra lại route ở backend."
+              "Xóa cầu thủ thất bại. Vui lòng kiểm tra lại."
             );
           }
         };
@@ -407,44 +454,46 @@
           playersDataCache = {};
           if (!players || players.length === 0) {
             noDataMessage.classList.remove("hidden");
+            // Reset message to default in case it was an error message
+            noDataMessage.innerHTML = "<p>Không tìm thấy cầu thủ nào.</p>";
             return;
           }
           noDataMessage.classList.add("hidden");
           players.forEach((player) => {
-            playersDataCache[player._id] = player; // Cache data
-            const teamName = teamsCache[player.team] || "N/A"; // Use cache to get team name
+            playersDataCache[player._id] = player;
+            const teamName = teamsCache[player.team] || "N/A";
             const row = document.createElement("tr");
             row.className = "hover:bg-gray-50";
             row.innerHTML = `
-                        <td class="py-2 px-4 border-b"><img src="${
-                          player.image
-                        }" alt="${
+                <td class="py-2 px-4 border-b"><img src="${
+                  player.image
+                }" alt="${
               player.playerName
             }" onerror="this.onerror=null;this.src='https://placehold.co/100x100/EFEFEF/AAAAAA&text=N/A';"></td>
-                        <td class="py-3 px-4 border-b font-medium">${
-                          player.playerName
-                        }</td>
-                        <td class="py-3 px-4 border-b info-cell" title="${
-                          player.information
-                        }">${player.information}</td>
-                        <td class="py-3 px-4 border-b">${player.cost.toLocaleString(
-                          "vi-VN"
-                        )}</td>
-                        <td class="py-3 px-4 border-b">${teamName}</td>
-                        <td class="py-3 px-4 border-b text-center">${
-                          player.isCaptain
-                            ? '<i class="fas fa-check-circle text-green-500"></i>'
-                            : '<i class="fas fa-times-circle text-red-500"></i>'
-                        }</td>
-                        <td class="py-3 px-4 border-b text-center">
-                            <button class="update-btn text-blue-500 hover:text-blue-700 mr-4" data-id="${
-                              player._id
-                            }"><i class="fas fa-edit"></i></button>
-                            <button class="delete-btn text-red-500 hover:text-red-700" data-id="${
-                              player._id
-                            }"><i class="fas fa-trash"></i></button>
-                        </td>
-                    `;
+                <td class="py-3 px-4 border-b font-medium">${
+                  player.playerName
+                }</td>
+                <td class="py-3 px-4 border-b info-cell" title="${
+                  player.information
+                }">${player.information}</td>
+                <td class="py-3 px-4 border-b">${player.cost.toLocaleString(
+                  "vi-VN"
+                )}</td>
+                <td class="py-3 px-4 border-b">${teamName}</td>
+                <td class="py-3 px-4 border-b text-center">${
+                  player.isCaptain
+                    ? '<i class="fas fa-check-circle text-green-500"></i>'
+                    : '<i class="fas fa-times-circle text-red-500"></i>'
+                }</td>
+                <td class="py-3 px-4 border-b text-center">
+                    <button class="update-btn text-blue-500 hover:text-blue-700 mr-4" data-id="${
+                      player._id
+                    }"><i class="fas fa-edit"></i></button>
+                    <button class="delete-btn text-red-500 hover:text-red-700" data-id="${
+                      player._id
+                    }"><i class="fas fa-trash"></i></button>
+                </td>
+            `;
             playerTableBody.appendChild(row);
           });
         };
@@ -464,24 +513,24 @@
           paginationControls.innerHTML = "";
           if (!pagination || pagination.totalPages <= 1) return;
           paginationControls.innerHTML = `
-                    <button class="px-3 py-1 rounded ${
-                      pagination.currentPage === 1
-                        ? "bg-gray-200 cursor-not-allowed"
-                        : "bg-white hover:bg-gray-100"
-                    }" data-page="${pagination.currentPage - 1}" ${
+              <button class="px-3 py-1 rounded ${
+                pagination.currentPage === 1
+                  ? "bg-gray-200 cursor-not-allowed"
+                  : "bg-white hover:bg-gray-100"
+              }" data-page="${pagination.currentPage - 1}" ${
             pagination.currentPage === 1 ? "disabled" : ""
           }>Trước</button>
-                    <span class="px-4 text-sm">Trang ${
-                      pagination.currentPage
-                    } / ${pagination.totalPages}</span>
-                    <button class="px-3 py-1 rounded ${
-                      pagination.currentPage === pagination.totalPages
-                        ? "bg-gray-200 cursor-not-allowed"
-                        : "bg-white hover:bg-gray-100"
-                    }" data-page="${pagination.currentPage + 1}" ${
+              <span class="px-4 text-sm">Trang ${pagination.currentPage} / ${
+            pagination.totalPages
+          }</span>
+              <button class="px-3 py-1 rounded ${
+                pagination.currentPage === pagination.totalPages
+                  ? "bg-gray-200 cursor-not-allowed"
+                  : "bg-white hover:bg-gray-100"
+              }" data-page="${pagination.currentPage + 1}" ${
             pagination.currentPage === pagination.totalPages ? "disabled" : ""
           }>Sau</button>
-                `;
+          `;
         };
 
         const handleApiError = (error, defaultMessage) => {
@@ -492,8 +541,13 @@
             error.response?.status === 403
           ) {
             message = "Lỗi xác thực. Vui lòng đăng nhập lại.";
+          } else if (error.response?.data?.message) {
+            message = error.response.data.message;
           }
-          playerTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-red-500">${message}</td></tr>`;
+          playerTableBody.innerHTML = ""; // Clear table body
+          noDataMessage.innerHTML = `<p class="text-red-500">${message}</p>`;
+          noDataMessage.classList.remove("hidden");
+          paginationControls.innerHTML = "";
         };
 
         // --- Modal Handling ---
@@ -521,7 +575,7 @@
           costInput.value = player.cost;
           informationInput.value = player.information;
           isCaptainInput.checked = player.isCaptain;
-          teamSelect.value = player.team || ""; // Set dropdown to the player's team ID
+          teamSelect.value = player.team || "";
 
           openModal(playerModal);
         };
@@ -546,7 +600,19 @@
             isCaptain: isCaptainInput.checked,
             team: teamSelect.value,
           };
+          console.log(formData);
           savePlayer(formData);
+        });
+
+        searchForm.addEventListener("submit", (e) => {
+          e.preventDefault();
+          const searchTerm = searchInput.value.trim();
+          searchPlayerByName(searchTerm);
+        });
+
+        clearSearchBtn.addEventListener("click", () => {
+          searchInput.value = "";
+          fetchPlayers(1);
         });
 
         document.body.addEventListener("click", (e) => {
@@ -571,11 +637,10 @@
             return;
           }
           try {
-            await fetchTeams(); // Wait for teams to be fetched and cached
-            await fetchPlayers(); // Now fetch players
+            await fetchTeams();
+            await fetchPlayers();
           } catch (error) {
             console.error("Initialization failed:", error);
-            // Error is already handled in the respective fetch functions
           }
         };
 

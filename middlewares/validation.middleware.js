@@ -82,10 +82,85 @@ const isAdmin = async (req, res, next) => {
     });
   }
 };
+
+// Bạn PHẢI dùng cùng một chuỗi bí mật đã dùng để tạo token lúc đăng nhập
+const JWT_SECRET = process.env.JWT_SECRET || "your-very-strong-secret-key";
+
+const verifyToken = (req, res, next) => {
+  // Lấy token từ header, thường có dạng "Bearer <token>"
+  const authHeader = req.headers["authorization"];
+
+  if (!authHeader) {
+    // Nếu không có header, trả về lỗi 403 (Forbidden) hoặc redirect tới trang đăng nhập
+    return res
+      .status(403)
+      .render("error", { message: "Yêu cầu cần có token để xác thực." });
+  }
+
+  // Tách chữ 'Bearer ' để lấy phần token
+  const token = authHeader.split(" ")[1];
+
+  if (!token) {
+    // Nếu có header nhưng không có token
+    return res
+      .status(403)
+      .render("error", { message: "Định dạng token không hợp lệ." });
+  }
+
+  try {
+    // Giải mã token
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    // Lưu thông tin đã giải mã (payload chứa membername, id, v.v.) vào đối tượng req
+    // để các route handler sau có thể sử dụng
+    req.member = decoded; // Ở đây `decoded` sẽ là object bạn đã dùng để tạo token, ví dụ: { id: '...', membername: '...' }
+  } catch (err) {
+    // Nếu token không hợp lệ (hết hạn, sai chữ ký)
+    console.error("Token không hợp lệ:", err.message);
+    // Có thể render trang lỗi hoặc redirect về trang đăng nhập
+    return res.status(401).render("login", {
+      error: "Token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.",
+    });
+  }
+
+  // Nếu mọi thứ ổn, cho phép request đi tiếp
+  return next();
+};
+
+const protectedRoutePage = async (req, res, next) => {
+  let token;
+
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    try {
+      token = req.headers.authorization.split(" ")[1];
+      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+      req.member = await Member.findById(decoded.id).select("-password");
+
+      if (!req.member) {
+        return res.status(401).json({ message: "Member not found" });
+      }
+
+      return next(); // Quan trọng: gọi next khi tất cả hợp lệ
+    } catch (error) {
+      console.error(error);
+      return res.status(401).json({ message: "Not authorized, token failed" });
+    }
+  }
+
+  // Nếu không có header hoặc không đúng định dạng Bearer
+  return (res.redirect = "/login");
+};
+module.exports = verifyToken;
 module.exports = {
   validate,
+  verifyToken,
   loginRules,
   registerRules,
   protectedRoute,
   isAdmin,
+  protectedRoutePage,
 };

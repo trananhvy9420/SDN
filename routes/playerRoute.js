@@ -45,6 +45,10 @@ playerRoute
         .withMessage("playerName must be required"),
       body("image").trim().notEmpty().withMessage("image must be required"),
       body("cost").trim().notEmpty().withMessage("cost must be required"),
+      body("information")
+        .trim()
+        .notEmpty()
+        .withMessage("information must be required"),
       body("isCaptain")
         .notEmpty()
         .isBoolean()
@@ -96,4 +100,5 @@ playerRoute
     protectedRoute,
     playerController.deletePlayer
   );
+
 module.exports = playerRoute;

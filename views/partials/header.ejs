@@ -4,7 +4,7 @@
 
     <nav>
       <ul class="flex items-center space-x-6">
-        <% if (typeof isLoggedIn !== 'undefined' && isLoggedIn) { %>
+        <% if (typeof isLoggedIn !== false && isLoggedIn) { %>
         <li>
           <a
             href="/user"
@@ -62,8 +62,7 @@
           event.preventDefault(); // Ngăn link điều hướng
 
           // Xóa token khỏi localStorage
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("refreshToken");
+          localStorage.clear();
 
           alert("Bạn đã đăng xuất thành công!");
 

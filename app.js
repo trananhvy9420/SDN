@@ -48,7 +48,9 @@ app.get("/user", async (req, res, next) => {
     // Render file 'views/user.ejs' và truyền biến 'players' sang
     res.render("user", {
       title: "Danh sách cầu thủ",
-      players: players, // players ở đây là một mảng các object cầu thủ
+      players: players,
+      isLoggedIn: true,
+      // players ở đây là một mảng các object cầu thủ
     });
   } catch (error) {
     console.error("Failed to fetch players for user page:", error);
@@ -85,7 +87,7 @@ app.get("/players", (req, res) => {
   });
 });
 app.get("/", (req, res) => {
-  res.redirect("/login");
+  res.redirect("/user");
 });
 app.get("/profile", (req, res) => {
   res.redirect("/profile");

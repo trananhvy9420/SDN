@@ -4,21 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin - Quản lý đội</title>
-    <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for icons -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <!-- Axios for making HTTP requests -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
       /* Custom styles */
@@ -70,7 +66,6 @@
           <h2 class="text-2xl font-semibold text-gray-800 mb-4 sm:mb-0">
             Danh sách đội
           </h2>
-          <!-- Button to open the Create Team Modal -->
           <button
             id="openCreateModalBtn"
             class="w-full sm:w-auto bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center"
@@ -79,7 +74,6 @@
           </button>
         </div>
 
-        <!-- Table to display teams -->
         <div class="overflow-x-auto">
           <table class="min-w-full bg-white border border-gray-200">
             <thead class="bg-gray-50">
@@ -101,9 +95,7 @@
                 </th>
               </tr>
             </thead>
-            <tbody id="teamTableBody">
-              <!-- Team rows will be inserted here by JavaScript -->
-            </tbody>
+            <tbody id="teamTableBody"></tbody>
           </table>
           <div
             id="no-teams-message"
@@ -112,17 +104,13 @@
             <p>Không tìm thấy đội nào. Bắt đầu bằng cách tạo một đội mới!</p>
           </div>
         </div>
-        <!-- Pagination controls -->
         <div
           id="paginationControls"
           class="flex justify-between items-center mt-6"
-        >
-          <!-- Pagination will be rendered here -->
-        </div>
+        ></div>
       </div>
     </div>
 
-    <!-- Create/Update Modal -->
     <div id="teamModal" class="modal-backdrop">
       <div
         class="modal bg-white rounded-lg shadow-xl w-11/12 md:max-w-md mx-auto p-6"
@@ -168,7 +156,6 @@
       </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
     <div id="deleteConfirmModal" class="modal-backdrop">
       <div
         class="modal bg-white rounded-lg shadow-xl w-11/12 md:max-w-md mx-auto p-6"
@@ -224,6 +211,26 @@
         let currentPage = 1;
         const limit = 10;
 
+        // --- Centralized Error Handling ---
+        /**
+         * Handles API errors, redirecting to login on auth failure.
+         * @param {Error} error - The error object from Axios.
+         * @returns {boolean} - Returns true if the error was an auth error and was handled.
+         */
+        const handleApiError = (error) => {
+          if (
+            error.response &&
+            (error.response.status === 401 || error.response.status === 403)
+          ) {
+            // Clear token and redirect to login for any authentication/authorization error
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("refresh_token");
+            window.location.href = "/login";
+            return true; // Indicates auth error was handled
+          }
+          return false; // Indicates it was another type of error
+        };
+
         // --- API Functions ---
 
         /**
@@ -234,9 +241,8 @@
         const fetchTeams = async (page = 1, limit = 10) => {
           const token = localStorage.getItem("access_token");
           if (!token) {
-            tableBody.innerHTML = `<tr><td colspan="3" class="text-center py-10 text-red-500">Lỗi: Không tìm thấy Access Token. Vui lòng đăng nhập lại.</td></tr>`;
-            noTeamsMessage.classList.add("hidden");
-            paginationControls.innerHTML = "";
+            // If no token exists client-side, redirect to login immediately.
+            window.location.href = "/login";
             return;
           }
 
@@ -247,21 +253,17 @@
                 headers: { Authorization: `Bearer ${token}` },
               }
             );
-            const result = response.data; // Axios wraps the response body in `data`
+            const result = response.data;
             renderTable(result.data || []);
             renderPagination(result.pagination || {});
             currentPage = page;
           } catch (error) {
             console.error("Error fetching teams:", error);
-            let errorMessage =
-              "Không thể tải danh sách đội. Vui lòng kiểm tra console.";
-            if (
-              error.response &&
-              (error.response.status === 401 || error.response.status === 403)
-            ) {
-              errorMessage =
-                "Lỗi xác thực: Bạn không có quyền xem nội dung này. Vui lòng đăng nhập với tư cách quản trị viên.";
-            }
+            if (handleApiError(error)) return; // Stop execution if redirected
+
+            // Handle other errors (e.g., server down)
+            const errorMessage =
+              "Không thể tải danh sách đội. Vui lòng thử lại sau.";
             tableBody.innerHTML = `<tr><td colspan="3" class="text-center py-10 text-red-500">${errorMessage}</td></tr>`;
             noTeamsMessage.classList.add("hidden");
             paginationControls.innerHTML = "";
@@ -275,8 +277,7 @@
         const saveTeam = async (teamData) => {
           const token = localStorage.getItem("access_token");
           if (!token) {
-            modalApiError.textContent = "Lỗi xác thực. Vui lòng đăng nhập lại.";
-            modalApiError.classList.remove("hidden");
+            window.location.href = "/login";
             return;
           }
 
@@ -298,6 +299,9 @@
             fetchTeams(currentPage); // Refresh the table
           } catch (error) {
             console.error("Error saving team:", error);
+            if (handleApiError(error)) return; // Stop execution if redirected
+
+            // Show other errors in the modal
             modalApiError.textContent =
               error.response?.data?.message || "Lưu đội thất bại.";
             modalApiError.classList.remove("hidden");
@@ -311,8 +315,7 @@
         const deleteTeam = async (id) => {
           const token = localStorage.getItem("access_token");
           if (!token) {
-            // This error is less likely to be seen, but good practice
-            console.error("No token found for deletion.");
+            window.location.href = "/login";
             return;
           }
           try {
@@ -320,6 +323,7 @@
               headers: { Authorization: `Bearer ${token}` },
             });
             closeModal(deleteConfirmModal);
+            // If the last item on a page is deleted, go to the previous page
             if (tableBody.rows.length === 1 && currentPage > 1) {
               fetchTeams(currentPage - 1);
             } else {
@@ -327,7 +331,9 @@
             }
           } catch (error) {
             console.error("Error deleting team:", error);
-            // Could add a general error notification area on the main page
+            if (handleApiError(error)) return; // Stop execution if redirected
+            // Optionally, show a generic error message on the main page
+            alert("Xóa đội thất bại. Vui lòng thử lại.");
           }
         };
 

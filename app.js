@@ -39,23 +39,12 @@ app.use(cookieParser());
 app.get("/login", (req, res) => {
   res.render("login", { title: "Trang Đăng Nhập" });
 });
+// Route này chỉ cần render trang, JavaScript sẽ tự lấy dữ liệu
 app.get("/user", async (req, res, next) => {
-  // Thêm async ở đây
-  try {
-    // Lấy tất cả cầu thủ từ database
-    const players = await Player.find({});
-
-    // Render file 'views/user.ejs' và truyền biến 'players' sang
-    res.render("user", {
-      title: "Danh sách cầu thủ",
-      players: players,
-      isLoggedIn: true,
-      // players ở đây là một mảng các object cầu thủ
-    });
-  } catch (error) {
-    console.error("Failed to fetch players for user page:", error);
-    next(error); // Chuyển lỗi đến error handler
-  }
+  res.render("user", {
+    title: "Danh sách cầu thủ",
+    // Không cần truyền players hay pagination ở đây nữa
+  });
 });
 // Sửa lại route /profile trong app.js
 app.get("/profile", (req, res) => {

@@ -9,75 +9,43 @@
   </head>
   <body class="bg-gray-200">
     <%- include('partials/header', { isLoggedIn: true }) %>
-    <script>
-      const allPlayers = <%- JSON.stringify(players) %>;
-    </script>
 
     <div class="container mx-auto p-4 md:p-8">
       <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">
         Danh Sách Cầu Thủ
       </h1>
 
+      <div class="mb-8 max-w-lg mx-auto">
+        <div class="relative">
+          <input
+            type="text"
+            id="search-input"
+            placeholder="Tìm kiếm cầu thủ theo tên..."
+            class="w-full px-4 py-3 border rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
+            autocomplete="off"
+          />
+          <button
+            id="clear-search-btn"
+            class="absolute inset-y-0 right-0 px-4 flex items-center text-gray-500 hover:text-gray-800 text-2xl font-bold hidden"
+          >
+            &times;
+          </button>
+        </div>
+      </div>
+
       <div
+        id="player-grid"
         class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
       >
-        <% if (players && players.length > 0) { %> <% players.forEach(player =>
-        { %>
-        <div
-          class="bg-white rounded-lg shadow-lg overflow-hidden transition-transform transform hover:-translate-y-1"
-        >
-          <div class="relative">
-            <img
-              class="w-full h-56 object-cover view-comments-trigger cursor-pointer"
-              src="<%= player.image %>"
-              alt="<%= player.playerName %>"
-              data-player-id="<%= player._id %>"
-            />
-
-            <% if (player.isCaptain) { %>
-            <div
-              class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full uppercase shadow-md"
-            >
-              Captain
-            </div>
-            <% } %>
-          </div>
-
-          <div class="p-4">
-            <h2 class="text-xl font-bold text-gray-900 truncate">
-              <%= player.playerName %>
-            </h2>
-            <p class="text-gray-600 mt-1">
-              Giá: <%= player.cost.toLocaleString() %> $
-            </p>
-            <p class="text-sm text-gray-500 mt-2 h-10 overflow-hidden">
-              <%= player.information || 'Chưa có thông tin.' %>
-            </p>
-          </div>
-
-          <div class="p-4 border-t border-gray-200 flex justify-between gap-2">
-            <button
-              class="flex-1 bg-gray-600 text-white py-2 px-4 rounded hover:bg-gray-700 transition-colors open-detail-modal"
-              data-player-id="<%= player._id %>"
-            >
-              Xem thêm
-            </button>
-
-            <button
-              class="flex-1 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors open-comment-modal"
-              data-player-id="<%= player._id %>"
-              data-player-name="<%= player.playerName %>"
-            >
-              Bình luận
-            </button>
-          </div>
-        </div>
-        <% }) %> <% } else { %>
         <p class="col-span-full text-center text-gray-500">
-          Không tìm thấy cầu thủ nào.
+          Đang tải danh sách cầu thủ...
         </p>
-        <% } %>
       </div>
+
+      <div
+        id="pagination-container"
+        class="flex justify-center items-center mt-8 space-x-2"
+      ></div>
     </div>
 
     <div
@@ -169,7 +137,7 @@
           <div class="flex justify-end gap-4">
             <button
               type="button"
-              id="close-modal"
+              id="close-comment-modal"
               class="bg-gray-300 text-gray-800 py-2 px-4 rounded hover:bg-gray-400"
             >
               Hủy
@@ -210,187 +178,339 @@
     </div>
 
     <script>
-      // --- LOGIC CHO VIEW COMMENTS MODAL (MỚI) ---
-      const viewCommentsModal = document.getElementById("view-comments-modal");
-      const closeViewCommentsBtn = document.getElementById(
-        "close-view-comments-modal"
-      );
-      const openViewCommentsTriggers = document.querySelectorAll(
-        ".view-comments-trigger"
-      );
-      const commentsList = document.getElementById("comments-list");
-      const access_token = localStorage.getItem("access_token");
-      openViewCommentsTriggers.forEach((trigger) => {
-        trigger.addEventListener("click", async () => {
-          const playerId = trigger.dataset.playerId;
-          commentsList.innerHTML =
-            '<p class="text-center text-gray-500">Đang tải bình luận...</p>';
-          viewCommentsModal.classList.remove("hidden");
+      document.addEventListener("DOMContentLoaded", () => {
+        // --- DOM Elements ---
+        const playerGrid = document.getElementById("player-grid");
+        const paginationContainer = document.getElementById(
+          "pagination-container"
+        );
+        const searchInput = document.getElementById("search-input");
+        const clearSearchBtn = document.getElementById("clear-search-btn");
+        const access_token = localStorage.getItem("access_token");
+
+        // --- State ---
+        let currentPage = 1;
+        const limit = 8; // Số lượng cầu thủ mỗi trang
+
+        // --- Render Functions ---
+
+        // Hàm render danh sách cầu thủ
+        const renderPlayers = (players) => {
+          playerGrid.innerHTML = ""; // Xóa nội dung cũ (loading hoặc trang cũ)
+          if (!players || players.length === 0) {
+            playerGrid.innerHTML = `<p class="col-span-full text-center text-gray-500">Không tìm thấy cầu thủ nào.</p>`;
+            return;
+          }
+          players.forEach((player) => {
+            const playerCard = `
+              <div class="bg-white rounded-lg shadow-lg overflow-hidden transition-transform transform hover:-translate-y-1">
+                <div class="relative">
+                  <img class="w-full h-56 object-cover view-comments-trigger cursor-pointer" src="${
+                    player.image
+                  }" alt="${player.playerName}" data-player-id="${player._id}">
+                  ${
+                    player.isCaptain
+                      ? `<div class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full uppercase shadow-md">Captain</div>`
+                      : ""
+                  }
+                </div>
+                <div class="p-4">
+                  <h2 class="text-xl font-bold text-gray-900 truncate">${
+                    player.playerName
+                  }</h2>
+                  <p class="text-gray-600 mt-1">Giá: ${player.cost.toLocaleString()} $</p>
+                  <p class="text-sm text-gray-500 mt-2 h-10 overflow-hidden">${
+                    player.information || "Chưa có thông tin."
+                  }</p>
+                </div>
+                <div class="p-4 border-t border-gray-200 flex justify-between gap-2">
+                  <button class="flex-1 bg-gray-600 text-white py-2 px-4 rounded hover:bg-gray-700 transition-colors open-detail-modal" data-player-id="${
+                    player._id
+                  }">
+                    Xem thêm
+                  </button>
+                  <button class="flex-1 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors open-comment-modal" data-player-id="${
+                    player._id
+                  }" data-player-name="${player.playerName}">
+                    Bình luận
+                  </button>
+                </div>
+              </div>`;
+            playerGrid.insertAdjacentHTML("beforeend", playerCard);
+          });
+        };
+
+        // Hàm render các nút phân trang
+        const renderPagination = (pagination) => {
+          paginationContainer.innerHTML = "";
+          if (!pagination || pagination.totalPages <= 1) {
+            return; // Không hiển thị nếu chỉ có 1 trang
+          }
+
+          const { currentPage, totalPages } = pagination;
+          let paginationHTML = "";
+
+          // Nút "Previous"
+          paginationHTML += `
+                <button class="px-4 py-2 mx-1 rounded ${
+                  currentPage === 1
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-white hover:bg-blue-500 hover:text-white"
+                }" 
+                        data-page="${currentPage - 1}" ${
+            currentPage === 1 ? "disabled" : ""
+          }>
+                    &laquo;
+                </button>`;
+
+          // Các nút số trang
+          for (let i = 1; i <= totalPages; i++) {
+            paginationHTML += `
+                    <button class="px-4 py-2 mx-1 rounded ${
+                      i === currentPage
+                        ? "bg-blue-500 text-white"
+                        : "bg-white hover:bg-blue-500 hover:text-white"
+                    }" 
+                            data-page="${i}">
+                        ${i}
+                    </button>`;
+          }
+
+          // Nút "Next"
+          paginationHTML += `
+                <button class="px-4 py-2 mx-1 rounded ${
+                  currentPage === totalPages
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-white hover:bg-blue-500 hover:text-white"
+                }" 
+                        data-page="${currentPage + 1}" ${
+            currentPage === totalPages ? "disabled" : ""
+          }>
+                    &raquo;
+                </button>`;
+
+          paginationContainer.innerHTML = paginationHTML;
+        };
+
+        // --- Core Fetching Function ---
+        const fetchAndRenderPlayers = async (page) => {
           try {
+            playerGrid.innerHTML = `<p class="col-span-full text-center text-gray-500">Đang tải...</p>`;
             const response = await axios.get(
-              `/api/player/${playerId}/comment`,
-              {
-                headers: {
-                  Authorization: `Bearer ${access_token}`,
-                },
-              }
+              `/api/player/getAll?page=${page}&limit=${limit}`
             );
-            {
-              console.log(response);
-            }
-            const comments = response.data.data;
-            commentsList.innerHTML = "";
-            if (comments && comments.length > 0) {
-              comments.forEach((comment) => {
-                const commentElement = document.createElement("li");
-                commentElement.className = "p-4 bg-gray-50 rounded-lg border";
-                let stars = "";
-                for (let i = 0; i < 3; i++) {
-                  stars += i < comment.rating ? "⭐" : "☆";
-                }
-                commentElement.innerHTML = `
-                  <div class="flex items-center justify-between mb-2">
-                      <p class="font-bold text-gray-800">Người dùng ẩn danh</p>
-                      <div class="text-lg">${stars}</div>
-                  </div>
-                  <p class="text-gray-700">${comment.content}</p>`;
-                commentsList.appendChild(commentElement);
-              });
-            } else {
-              commentsList.innerHTML =
-                '<p class="text-center text-gray-500">Chưa có bình luận nào cho cầu thủ này.</p>';
-            }
+            renderPlayers(response.data.data);
+            renderPagination(response.data.pagination);
+            currentPage = page; // Cập nhật trang hiện tại
           } catch (error) {
-            console.error("Lỗi khi lấy bình luận:", error);
+            console.error("Lỗi khi tải danh sách cầu thủ:", error);
+            playerGrid.innerHTML = `<p class="col-span-full text-center text-red-500">Không thể tải được dữ liệu.</p>`;
+          }
+        };
+
+        // --- Event Listeners ---
+
+        // Phân trang
+        paginationContainer.addEventListener("click", (e) => {
+          const button = e.target.closest("button");
+          if (button && button.dataset.page) {
+            const pageToGo = parseInt(button.dataset.page, 10);
+            if (pageToGo !== currentPage) {
+              fetchAndRenderPlayers(pageToGo);
+            }
+          }
+        });
+
+        // Tìm kiếm
+        let searchTimeout;
+        searchInput.addEventListener("input", (e) => {
+          const query = e.target.value.trim();
+          clearSearchBtn.classList.toggle("hidden", !query);
+
+          // Debounce: Chờ người dùng gõ xong mới gửi request
+          clearTimeout(searchTimeout);
+          searchTimeout = setTimeout(async () => {
+            if (!query) {
+              paginationContainer.classList.remove("hidden");
+              fetchAndRenderPlayers(1); // Quay về trang 1 khi xóa tìm kiếm
+              return;
+            }
+
+            try {
+              paginationContainer.classList.add("hidden"); // Ẩn phân trang khi tìm kiếm
+              playerGrid.innerHTML = `<p class="col-span-full text-center text-gray-500">Đang tìm...</p>`;
+              const response = await axios.get(
+                `/api/player/search?playerName=${query}`
+              );
+              renderPlayers(response.data.data);
+            } catch (error) {
+              console.error("Lỗi khi tìm kiếm:", error);
+              playerGrid.innerHTML = `<p class="col-span-full text-center text-red-500">Có lỗi xảy ra khi tìm kiếm.</p>`;
+            }
+          }, 300); // Chờ 300ms
+        });
+
+        clearSearchBtn.addEventListener("click", () => {
+          searchInput.value = "";
+          clearSearchBtn.classList.add("hidden");
+          paginationContainer.classList.remove("hidden");
+          fetchAndRenderPlayers(1); // Tải lại trang đầu
+        });
+
+        // Mở Modals (Sử dụng Event Delegation)
+        playerGrid.addEventListener("click", async (e) => {
+          const target = e.target;
+          const openDetailButton = target.closest(".open-detail-modal");
+          const openCommentButton = target.closest(".open-comment-modal");
+          const viewCommentsTrigger = target.closest(".view-comments-trigger");
+
+          // Mở modal xem chi tiết
+          if (openDetailButton) {
+            const playerId = openDetailButton.dataset.playerId;
+            try {
+              // ** MỚI: Gọi API để lấy chi tiết 1 cầu thủ **
+              const response = await axios.get(
+                `/api/player/searchByID?id=${playerId}`
+              );
+              const player = response.data.data;
+
+              if (player) {
+                document.getElementById("modal-detail-name").textContent =
+                  player.playerName;
+                document.getElementById("modal-detail-image").src =
+                  player.image;
+                document.getElementById("modal-detail-cost").textContent =
+                  player.cost.toLocaleString();
+                document.getElementById("modal-detail-info").textContent =
+                  player.information || "Không có thông tin chi tiết.";
+                const captainEl = document.getElementById(
+                  "modal-detail-isCaptain"
+                );
+                if (player.isCaptain) {
+                  captainEl.textContent = "⭐ Đội trưởng";
+                  captainEl.classList.remove("hidden");
+                } else {
+                  captainEl.classList.add("hidden");
+                }
+                document
+                  .getElementById("detail-modal")
+                  .classList.remove("hidden");
+              }
+            } catch (error) {
+              console.error("Lỗi khi lấy chi tiết cầu thủ:", error);
+              alert("Không thể tải thông tin chi tiết cầu thủ.");
+            }
+          }
+
+          // Mở modal bình luận (giữ nguyên)
+          if (openCommentButton) {
+            document.getElementById("modal-player-name").textContent =
+              openCommentButton.dataset.playerName;
+            document.getElementById("modal-player-id").value =
+              openCommentButton.dataset.playerId;
+            document.getElementById("comment-modal").classList.remove("hidden");
+          }
+
+          // Mở modal xem các bình luận (giữ nguyên)
+          if (viewCommentsTrigger) {
+            const playerId = viewCommentsTrigger.dataset.playerId;
+            const commentsList = document.getElementById("comments-list");
             commentsList.innerHTML =
-              '<p class="text-center text-red-500">Không thể tải được bình luận.</p>';
-          }
-        });
-      });
+              '<p class="text-center text-gray-500">Đang tải bình luận...</p>';
+            document
+              .getElementById("view-comments-modal")
+              .classList.remove("hidden");
 
-      const closeViewCommentsModal = () => {
-        viewCommentsModal.classList.add("hidden");
-      };
-      closeViewCommentsBtn.addEventListener("click", closeViewCommentsModal);
-      viewCommentsModal.addEventListener("click", (event) => {
-        if (event.target === viewCommentsModal) {
-          closeViewCommentsModal();
-        }
-      });
-
-      // --- LOGIC CHO DETAIL MODAL (CŨ) ---
-      const detailModal = document.getElementById("detail-modal");
-      const closeDetailModalBtn = document.getElementById("close-detail-modal");
-      const openDetailModalBtns =
-        document.querySelectorAll(".open-detail-modal");
-      const detailName = document.getElementById("modal-detail-name");
-      const detailImage = document.getElementById("modal-detail-image");
-      const detailCost = document.getElementById("modal-detail-cost");
-      const detailIsCaptain = document.getElementById("modal-detail-isCaptain");
-      const detailInfo = document.getElementById("modal-detail-info");
-
-      openDetailModalBtns.forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const playerId = btn.dataset.playerId;
-          const player = allPlayers.find((p) => p._id === playerId);
-          if (player) {
-            detailName.textContent = player.playerName;
-            detailImage.src = player.image;
-            detailCost.textContent = player.cost.toLocaleString();
-            detailInfo.textContent =
-              player.information || "Không có thông tin chi tiết.";
-            if (player.isCaptain) {
-              detailIsCaptain.textContent = "⭐ Đội trưởng";
-              detailIsCaptain.classList.remove("hidden");
-            } else {
-              detailIsCaptain.textContent = "";
-              detailIsCaptain.classList.add("hidden");
+            try {
+              const response = await axios.get(
+                `/api/player/${playerId}/comment`,
+                {
+                  headers: { Authorization: `Bearer ${access_token}` },
+                }
+              );
+              const comments = response.data.data;
+              commentsList.innerHTML = "";
+              if (comments && comments.length > 0) {
+                comments.forEach((comment) => {
+                  const stars =
+                    "⭐".repeat(comment.rating) +
+                    "☆".repeat(3 - comment.rating);
+                  const authorName = comment.author
+                    ? comment.author.name
+                    : "Người dùng ẩn danh";
+                  commentsList.innerHTML += `
+                                <li class="p-4 bg-gray-50 rounded-lg border">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <p class="font-bold text-gray-800">${authorName}</p>
+                                        <div class="text-lg">${stars}</div>
+                                    </div>
+                                    <p class="text-gray-700">${comment.content}</p>
+                                </li>`;
+                });
+              } else {
+                commentsList.innerHTML =
+                  '<p class="text-center text-gray-500">Chưa có bình luận nào.</p>';
+              }
+            } catch (error) {
+              commentsList.innerHTML =
+                '<p class="text-center text-red-500">Không thể tải bình luận. Bạn cần đăng nhập để xem.</p>';
             }
-            detailModal.classList.remove("hidden");
           }
         });
-      });
 
-      const closeDetailModal = () => {
-        detailModal.classList.add("hidden");
-      };
-      closeDetailModalBtn.addEventListener("click", closeDetailModal);
-      detailModal.addEventListener("click", (event) => {
-        if (event.target === detailModal) {
-          closeDetailModal();
-        }
-      });
+        // Logic đóng modal và gửi form (giữ nguyên như cũ)
+        const setupModalCloseLogic = (modalId, closeButtonId) => {
+          const modal = document.getElementById(modalId);
+          const closeButton = document.getElementById(closeButtonId);
+          const closeModal = () => modal.classList.add("hidden");
+          closeButton.addEventListener("click", closeModal);
+          modal.addEventListener("click", (e) => {
+            if (e.target === modal) closeModal();
+          });
+        };
+        setupModalCloseLogic("detail-modal", "close-detail-modal");
+        setupModalCloseLogic("comment-modal", "close-comment-modal");
+        setupModalCloseLogic(
+          "view-comments-modal",
+          "close-view-comments-modal"
+        );
 
-      // --- LOGIC CHO COMMENT MODAL (CŨ) ---
-      const commentModal = document.getElementById("comment-modal");
-      const closeCommentModalBtn = document.getElementById("close-modal");
-      const openCommentModalBtns = document.querySelectorAll(
-        ".open-comment-modal"
-      );
-      const commentForm = document.getElementById("comment-form");
-      const modalPlayerName = document.getElementById("modal-player-name");
-      const modalPlayerIdInput = document.getElementById("modal-player-id");
-      const modalErrorMessage = document.getElementById("modal-error-message");
+        document
+          .getElementById("comment-form")
+          .addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const modalErrorMessage = document.getElementById(
+              "modal-error-message"
+            );
+            modalErrorMessage.textContent = "";
 
-      openCommentModalBtns.forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const playerId = btn.dataset.playerId;
-          const playerName = btn.dataset.playerName;
-          modalPlayerName.textContent = playerName;
-          modalPlayerIdInput.value = playerId;
-          modalErrorMessage.textContent = "";
-          commentForm.reset();
-          commentModal.classList.remove("hidden");
-        });
-      });
+            const playerId = document.getElementById("modal-player-id").value;
+            const rating = document.getElementById("rating").value;
+            const content = document.getElementById("content").value;
 
-      const closeCommentModal = () => {
-        commentModal.classList.add("hidden");
-      };
-      closeCommentModalBtn.addEventListener("click", closeCommentModal);
-      commentModal.addEventListener("click", (event) => {
-        if (event.target === commentModal) {
-          closeCommentModal();
-        }
-      });
-
-      commentForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        modalErrorMessage.textContent = "";
-        const playerId = modalPlayerIdInput.value;
-        const rating = document.getElementById("rating").value;
-        const content = document.getElementById("content").value;
-        const token = localStorage.getItem("access_token");
-
-        if (!token) {
-          modalErrorMessage.textContent = "Bạn cần đăng nhập để bình luận!";
-          return;
-        }
-
-        try {
-          const response = await axios.post(
-            `/api/player/${playerId}/add-comment`,
-            { rating: rating, content: content },
-            {
-              headers: {
-                Authorization: `Bearer ${access_token}`,
-              },
+            if (!access_token) {
+              modalErrorMessage.textContent = "Bạn cần đăng nhập để bình luận!";
+              return;
             }
-          );
-          alert("Bình luận của bạn đã được thêm thành công!");
-          closeCommentModal();
-        } catch (error) {
-          console.error("Lỗi khi thêm bình luận:", error);
-          if (
-            error.response &&
-            error.response.data &&
-            error.response.data.message
-          ) {
-            modalErrorMessage.textContent = error.response.data.message;
-          } else {
-            modalErrorMessage.textContent = "Đã có lỗi xảy ra.";
-          }
-        }
+
+            try {
+              await axios.post(
+                `/api/player/${playerId}/add-comment`,
+                { rating, content },
+                {
+                  headers: { Authorization: `Bearer ${access_token}` },
+                }
+              );
+              alert("Bình luận của bạn đã được thêm thành công!");
+              document.getElementById("comment-modal").classList.add("hidden");
+            } catch (error) {
+              modalErrorMessage.textContent =
+                error.response?.data?.message || "Đã có lỗi xảy ra.";
+            }
+          });
+
+        // --- Initial Load ---
+        fetchAndRenderPlayers(currentPage);
       });
     </script>
   </body>

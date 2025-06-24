@@ -4,7 +4,7 @@
 
     <nav>
       <ul class="flex items-center space-x-6">
-        <% if (typeof isLoggedIn !== false && isLoggedIn) { %>
+        <% if (typeof isLoggedIn !== 'undefined' && isLoggedIn) { %>
         <li>
           <a
             href="/user"

@@ -10,6 +10,10 @@ const playersSchema = new schema(
     information: { type: String, require: true },
     comments: [Comment.schema],
     team: { type: mongoose.Schema.Types.ObjectId, ref: "Team", require: true },
+    disable: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

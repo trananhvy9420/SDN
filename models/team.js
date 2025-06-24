@@ -6,6 +6,10 @@ const teamSchema = new schema(
       type: String,
       required: true,
     },
+    disable: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

@@ -1,77 +1,78 @@
-<header class="bg-white shadow-md">
-  <div class="container mx-auto flex justify-between items-center p-4">
-    <a href="/user" class="text-2xl font-bold text-blue-600">CR7 is GOAT</a>
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trang Web CR7</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100">
+    <header class="bg-white shadow-md">
+      <div class="container mx-auto flex justify-between items-center p-4">
+        <a href="/" class="text-2xl font-bold text-blue-600">CR7 is GOAT</a>
+        <nav>
+          <ul class="flex items-center space-x-6" id="nav-menu"></ul>
+        </nav>
+      </div>
+    </header>
 
-    <nav>
-      <ul class="flex items-center space-x-6">
-        <% if (typeof isLoggedIn !== 'undefined' && isLoggedIn) { %>
-        <li>
-          <a
-            href="/user"
-            class="text-gray-600 hover:text-blue-500 transition-colors"
-            >Dashboard</a
-          >
-        </li>
-        <li>
-          <a
-            href="/profile"
-            class="text-gray-600 hover:text-blue-500 transition-colors"
-            >Profile</a
-          >
-        </li>
+    <main class="container mx-auto p-8 mt-8">
+      <div class="bg-white p-6 rounded-lg shadow-lg">
+        <h1 class="text-3xl font-bold mb-4" id="welcome-message">
+          Chào mừng đến với trang web!
+        </h1>
+        <p class="text-gray-700">
+          Đây là nội dung chính của trang web của bạn.
+        </p>
+      </div>
+    </main>
 
-        <li>
-          <a
-            href="#"
-            id="logout-button"
-            class="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition-colors"
-          >
-            Logout
-          </a>
-        </li>
+    <script>
+      function setupHeader() {
+        const navMenu = document.getElementById("nav-menu");
+        const welcomeMessage = document.getElementById("welcome-message");
+        const accessToken = localStorage.getItem("access_token");
 
-        <% } else { %>
-        <li>
-          <a
-            href="/login"
-            class="text-gray-600 hover:text-blue-500 transition-colors"
-            >Login</a
-          >
-        </li>
-        <li>
-          <a
-            href="/register"
-            class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors"
-            >Register</a
-          >
-        </li>
-        <% } %>
-      </ul>
-    </nav>
-  </div>
-</header>
+        navMenu.innerHTML = "";
 
-<% if (typeof isLoggedIn !== 'undefined' && isLoggedIn) { %>
-<script>
-  // Đảm bảo script chỉ chạy một lần dù header được include nhiều lần
-  if (!window.logoutListenerAdded) {
-    document.addEventListener("DOMContentLoaded", () => {
-      const logoutButton = document.getElementById("logout-button");
-      if (logoutButton) {
-        logoutButton.addEventListener("click", (event) => {
-          event.preventDefault(); // Ngăn link điều hướng
+        if (accessToken) {
+          // --- KHI ĐÃ ĐĂNG NHẬP ---
+          welcomeMessage.textContent = "Chào mừng bạn đã trở lại!";
+          navMenu.innerHTML = `
+            <li><a href="/user" class="text-gray-600 hover:text-blue-500 transition-colors">Dashboard</a></li>
+            <li><a href="/profile" class="text-gray-600 hover:text-blue-500 transition-colors">Profile</a></li>
+            <li>
+              <a href="#" id="logout-button" class="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition-colors">
+                Logout
+              </a>
+            </li>
+          `;
 
-          // Xóa token khỏi localStorage
-          localStorage.clear();
-
-          alert("Bạn đã đăng xuất thành công!");
-
-          // Chuyển hướng về trang đăng nhập
-          window.location.href = "/login";
-        });
+          const logoutButton = document.getElementById("logout-button");
+          if (logoutButton) {
+            logoutButton.addEventListener("click", (event) => {
+              event.preventDefault();
+              localStorage.removeItem("access_token");
+              localStorage.removeItem("refresh_token");
+              alert("Bạn đã đăng xuất thành công!");
+              window.location.href = "/";
+            });
+          }
+        } else {
+          // --- KHI CHƯA ĐĂNG NHẬP ---
+          welcomeMessage.textContent = "Chào mừng đến với trang web!";
+          navMenu.innerHTML = `
+            <li>
+              <a href="/auth?form=login" class="text-gray-600 hover:text-blue-500 transition-colors">Login</a>
+            </li>
+            <li>
+              <a href="/auth?form=register" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors">Register</a>
+            </li>
+          `;
+        }
       }
-    });
-    window.logoutListenerAdded = true;
-  }
-</script>
-<% } %>
+
+      document.addEventListener("DOMContentLoaded", setupHeader);
+    </script>
+  </body>
+</html>

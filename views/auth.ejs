@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   </head>
-  <body class="bg-gray-100 flex items-center justify-center min-h-screen">
+  <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
     <a
       href="/"
       class="absolute top-4 left-4 bg-white text-gray-800 py-2 px-4 rounded-lg shadow-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-300"
@@ -15,11 +15,10 @@
       &larr; Quay về trang chủ
     </a>
     <div class="bg-white p-8 rounded-lg shadow-lg max-w-sm w-full">
-      <!-- Login Form -->
-      <div id="login-section">
+      <div id="login-section" class="hidden">
         <div class="flex justify-center mb-6">
-          <span class="inline-block bg-gray-200 rounded-full p-3">
-            <svg
+          <span class="inline-block bg-gray-200 rounded-full p-3"
+            ><svg
               xmlns="http://www.w3.org/2000/svg"
               width="24"
               height="24"
@@ -28,9 +27,8 @@
               <path
                 fill="currentColor"
                 d="M12 4a4 4 0 1 1 0 8a4 4 0 0 1 0-8M6.5 14a5.5 5.5 0 0 0-4.86 8.16L1.5 22.5l.16-.14A5.5 5.5 0 0 0 6.5 14m11 0a5.5 5.5 0 0 0-4.86 8.16l-.14.14l.16.14a5.5 5.5 0 0 0 4.84-8.3z"
-              />
-            </svg>
-          </span>
+              /></svg
+          ></span>
         </div>
         <h2 class="text-2xl font-semibold text-center mb-4">
           Đăng nhập tài khoản
@@ -38,7 +36,7 @@
         <p class="text-gray-600 text-center mb-6">
           Chào mừng trở lại! Vui lòng nhập thông tin của bạn.
         </p>
-        <form id="login-form">
+        <form id="login-form" novalidate>
           <div class="mb-4">
             <label
               for="login-membername"
@@ -48,11 +46,14 @@
             <input
               type="text"
               id="login-membername"
-              name="membername"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
               placeholder="Nhập tên thành viên"
               required
             />
+            <p
+              id="login-membername-error"
+              class="text-red-500 text-xs mt-1 h-4"
+            ></p>
           </div>
           <div class="mb-4">
             <label
@@ -63,15 +64,18 @@
             <input
               type="password"
               id="login-password"
-              name="password"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
               placeholder="********"
               required
             />
+            <p
+              id="login-password-error"
+              class="text-red-500 text-xs mt-1 h-4"
+            ></p>
           </div>
           <div
-            id="login-error-message"
-            class="text-red-500 text-sm mb-4 text-center"
+            id="login-form-error"
+            class="text-red-500 text-sm mb-4 text-center h-5"
           ></div>
           <button
             type="submit"
@@ -91,11 +95,10 @@
         </p>
       </div>
 
-      <!-- Register Form (Hidden by default) -->
       <div id="register-section" class="hidden">
         <div class="flex justify-center mb-6">
-          <span class="inline-block bg-gray-200 rounded-full p-3">
-            <svg
+          <span class="inline-block bg-gray-200 rounded-full p-3"
+            ><svg
               xmlns="http://www.w3.org/2000/svg"
               width="24"
               height="24"
@@ -104,9 +107,8 @@
               <path
                 fill="currentColor"
                 d="M12 4a4 4 0 0 1 4 4a4 4 0 0 1-4 4a4 4 0 0 1-4-4a4 4 0 0 1 4-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4"
-              />
-            </svg>
-          </span>
+              /></svg
+          ></span>
         </div>
         <h2 class="text-2xl font-semibold text-center mb-4">
           Tạo tài khoản mới
@@ -114,7 +116,7 @@
         <p class="text-gray-600 text-center mb-6">
           Điền thông tin của bạn để bắt đầu.
         </p>
-        <form id="register-form">
+        <form id="register-form" novalidate>
           <div class="mb-4">
             <label
               for="register-membername"
@@ -124,10 +126,14 @@
             <input
               type="text"
               id="register-membername"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
               placeholder="VD: user123"
               required
             />
+            <p
+              id="register-membername-error"
+              class="text-red-500 text-xs mt-1 h-4"
+            ></p>
           </div>
           <div class="mb-4">
             <label
@@ -138,10 +144,14 @@
             <input
               type="text"
               id="register-name"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
               placeholder="VD: Nguyễn Văn A"
               required
             />
+            <p
+              id="register-name-error"
+              class="text-red-500 text-xs mt-1 h-4"
+            ></p>
           </div>
           <div class="mb-4">
             <label
@@ -152,9 +162,13 @@
             <input
               type="date"
               id="register-yob"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
               required
             />
+            <p
+              id="register-yob-error"
+              class="text-red-500 text-xs mt-1 h-4"
+            ></p>
           </div>
           <div class="mb-4">
             <label
@@ -165,14 +179,18 @@
             <input
               type="password"
               id="register-password"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
               placeholder="********"
               required
             />
+            <p
+              id="register-password-error"
+              class="text-red-500 text-xs mt-1 h-4"
+            ></p>
           </div>
           <div
-            id="register-error-message"
-            class="text-red-500 text-sm mb-4 text-center"
+            id="register-form-error"
+            class="text-red-500 text-sm mb-4 text-center h-5"
           ></div>
           <button
             type="submit"
@@ -195,97 +213,114 @@
 
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-        // Sections and Forms
+        // --- PHẦN 1: CÁC BIẾN VÀ HÀM TIỆN ÍCH ---
         const loginSection = document.getElementById("login-section");
         const registerSection = document.getElementById("register-section");
         const loginForm = document.getElementById("login-form");
         const registerForm = document.getElementById("register-form");
-
-        // Buttons to toggle forms
         const showRegisterBtn = document.getElementById("show-register-btn");
         const showLoginBtn = document.getElementById("show-login-btn");
 
-        // Error message divs
-        const loginErrorDiv = document.getElementById("login-error-message");
-        const registerErrorDiv = document.getElementById(
-          "register-error-message"
-        );
+        const clearErrors = (formType) => {
+          const fields =
+            formType === "login"
+              ? ["membername", "password"]
+              : ["membername", "name", "yob", "password"];
+          fields.forEach((field) => {
+            const inputEl = document.getElementById(`${formType}-${field}`);
+            const errorEl = document.getElementById(
+              `${formType}-${field}-error`
+            );
+            if (inputEl)
+              inputEl.classList.remove("border-red-500", "focus:ring-red-500");
+            if (errorEl) errorEl.textContent = "";
+          });
+          const formErrorEl = document.getElementById(`${formType}-form-error`);
+          if (formErrorEl) formErrorEl.textContent = "";
+        };
 
-        // --- Toggle Forms ---
+        // --- PHẦN 2: HIỂN THỊ FORM DỰA TRÊN URL KHI TẢI TRANG ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const formToShow = urlParams.get("form");
+        if (formToShow === "register") {
+          registerSection.classList.remove("hidden");
+        } else {
+          loginSection.classList.remove("hidden");
+        }
+
+        // --- PHẦN 3: CÁC EVENT LISTENER ---
+
+        // Chuyển đổi giữa các form bằng nút bấm
         showRegisterBtn.addEventListener("click", () => {
+          clearErrors("login");
           loginSection.classList.add("hidden");
           registerSection.classList.remove("hidden");
         });
 
         showLoginBtn.addEventListener("click", () => {
+          clearErrors("register");
           registerSection.classList.add("hidden");
           loginSection.classList.remove("hidden");
         });
 
-        // --- Login Handler ---
+        // Xử lý submit form đăng nhập
         loginForm.addEventListener("submit", async (event) => {
           event.preventDefault();
-          loginErrorDiv.textContent = ""; // Clear old errors
-
+          clearErrors("login");
           const membername = document.getElementById("login-membername").value;
           const password = document.getElementById("login-password").value;
+          const formErrorDiv = document.getElementById("login-form-error");
 
           try {
             const response = await axios.post("/api/auth", {
               membername,
               password,
             });
-
-            // On successful login, save tokens and redirect
             localStorage.setItem("access_token", response.data.access_token);
             localStorage.setItem("refresh_token", response.data.refresh_token);
-
-            if (response.data.member.isAdmin === true) {
+            if (response.data.member && response.data.member.isAdmin === true) {
               window.location.href = "/admin";
             } else {
               window.location.href = "/user";
             }
           } catch (error) {
-            // Handle login failure
-            console.error("Lỗi đăng nhập:", error);
+            console.error("Lỗi đăng nhập:", error.response);
             if (
               error.response &&
               error.response.data &&
               error.response.data.message
             ) {
-              loginErrorDiv.textContent = error.response.data.message;
+              formErrorDiv.textContent = error.response.data.message;
             } else {
-              loginErrorDiv.textContent = "Đã có lỗi xảy ra. Vui lòng thử lại.";
+              formErrorDiv.textContent =
+                "Tên thành viên hoặc mật khẩu không đúng.";
             }
           }
         });
 
-        // --- Register Handler ---
+        // Xử lý submit form đăng ký
         registerForm.addEventListener("submit", async (event) => {
           event.preventDefault();
-          registerErrorDiv.textContent = ""; // Clear old errors
-
+          clearErrors("register");
           const membername = document.getElementById(
             "register-membername"
           ).value;
           const name = document.getElementById("register-name").value;
           const YOB = document.getElementById("register-yob").value;
           const password = document.getElementById("register-password").value;
+          const formErrorDiv = document.getElementById("register-form-error");
 
           try {
-            const response = await axios.post("/api/auth/register", {
+            await axios.post("/api/auth/register", {
               membername,
               password,
               name,
               YOB,
             });
-
-            // ✅ Thành công thì tiếp tục login
             const loginResponse = await axios.post("/api/auth", {
               membername,
               password,
             });
-
             localStorage.setItem(
               "access_token",
               loginResponse.data.access_token
@@ -296,32 +331,35 @@
             );
             window.location.href = "/user";
           } catch (error) {
-            console.error("Lỗi đăng ký:", error);
-
-            if (
-              error.response &&
-              error.response.data &&
-              error.response.data.errors
-            ) {
-              // ⛔ Trường hợp lỗi validation (422)
-              const errorMessages = error.response.data.errors.map((err) => {
-                const key = Object.keys(err)[0];
-                return err[key]; // Lấy nội dung lỗi như "Membername must be at least 10 characters"
-              });
-              window.alert(errorMessages.join("\n"));
-              registerErrorDiv.textContent = errorMessages.join(" ");
-            } else if (
-              error.response &&
-              error.response.data &&
-              error.response.data.message
-            ) {
-              // ⛔ Các lỗi khác có `message`
-              window.alert(error.response.data.message);
-              registerErrorDiv.textContent = error.response.data.message;
+            console.error("Chi tiết lỗi API:", error.response);
+            if (error.response && error.response.data) {
+              const apiErrors = error.response.data.errors;
+              if (apiErrors && Array.isArray(apiErrors)) {
+                apiErrors.forEach((errorObject) => {
+                  const fieldName = Object.keys(errorObject)[0];
+                  if (!fieldName) return;
+                  const errorMessage = errorObject[fieldName];
+                  const errorElement = document.getElementById(
+                    `register-${fieldName}-error`
+                  );
+                  const inputElement = document.getElementById(
+                    `register-${fieldName}`
+                  );
+                  if (errorElement) errorElement.textContent = errorMessage;
+                  if (inputElement)
+                    inputElement.classList.add(
+                      "border-red-500",
+                      "focus:ring-red-500"
+                    );
+                });
+              } else if (error.response.data.message) {
+                formErrorDiv.textContent = error.response.data.message;
+              } else {
+                formErrorDiv.textContent = "Đã có lỗi không xác định xảy ra.";
+              }
             } else {
-              window.alert("Đã có lỗi xảy ra. Vui lòng thử lại.");
-              registerErrorDiv.textContent =
-                "Đã có lỗi xảy ra. Vui lòng thử lại.";
+              formErrorDiv.textContent =
+                "Không thể kết nối đến máy chủ. Vui lòng thử lại.";
             }
           }
         });

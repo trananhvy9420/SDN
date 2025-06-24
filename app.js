@@ -36,8 +36,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-app.get("/login", (req, res) => {
-  res.render("login", { title: "Trang Đăng Nhập" });
+app.get("/auth", (req, res) => {
+  res.render("auth", { title: "Trang Đăng Nhập" });
 });
 // Route này chỉ cần render trang, JavaScript sẽ tự lấy dữ liệu
 app.get("/user", async (req, res, next) => {
@@ -75,6 +75,14 @@ app.get("/players", (req, res) => {
     isLoggedIn: true,
   });
 });
+app.get("/auth", (req, res) => {
+  res.render("auth"); // Tên file là 'auth.ejs'
+});
+app.get("/register", (req, res) => {
+  res.render("register", {
+    title: "Đăng ký",
+  });
+});
 app.get("/", (req, res) => {
   res.redirect("/user");
 });
@@ -92,6 +100,9 @@ app.get("/admin", (req, res) => {
 });
 app.get("/players", (req, res) => {
   res.redirect("/players");
+});
+app.get("/register", (req, res) => {
+  res.redirect("/register");
 });
 app.use("/", indexRouter);
 app.use("/users", usersRouter);

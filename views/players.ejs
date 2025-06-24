@@ -311,7 +311,7 @@
       document.addEventListener("DOMContentLoaded", function () {
         // API URLs
         const PLAYER_API_URL = "/api/player";
-        const TEAM_API_URL = "/api/team";
+        const TEAM_API_URL = "/api/team/";
         const SEARCH_PLAYER_API_URL = "/api/player/search";
 
         // DOM Elements
@@ -407,6 +407,7 @@
         const fetchTeams = async () => {
           try {
             const response = await api.get(TEAM_API_URL);
+            console.log(response);
             const teams = response.data.data || [];
             populateTeamSelect(teams);
             teamsCache = teams.reduce((acc, team) => {
@@ -461,7 +462,7 @@
           noDataMessage.classList.add("hidden");
           players.forEach((player) => {
             playersDataCache[player._id] = player;
-            const teamName = teamsCache[player.team] || "N/A";
+            const teamName = teamsCache[player.teams] || "N/A";
             const row = document.createElement("tr");
             row.className = "hover:bg-gray-50";
             row.innerHTML = `
@@ -479,7 +480,7 @@
                 <td class="py-3 px-4 border-b">${player.cost.toLocaleString(
                   "vi-VN"
                 )}</td>
-                <td class="py-3 px-4 border-b">${teamName}</td>
+                <td class="py-3 px-4 border-b">${player.team.teamName}</td>
                 <td class="py-3 px-4 border-b text-center">${
                   player.isCaptain
                     ? '<i class="fas fa-check-circle text-green-500"></i>'

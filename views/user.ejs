@@ -91,7 +91,6 @@
         </div>
       </div>
     </div>
-
     <div
       id="comment-modal"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden p-4"
@@ -152,7 +151,6 @@
         </form>
       </div>
     </div>
-
     <div
       id="view-comments-modal"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden p-4"
@@ -215,13 +213,18 @@
                   }
                 </div>
                 <div class="p-4">
-                  <h2 class="text-xl font-bold text-gray-900 truncate">${
+                  <h2 class="text-xl font-bold  truncate text-blue-500"> <span role="img" aria-label="player">👤</span> ${
                     player.playerName
                   }</h2>
-                  <p class="text-gray-600 mt-1">Giá: ${player.cost.toLocaleString()} $</p>
+                    <h2 class="text-xl font-bold text-gray-900 truncate">  <span role="img" aria-label="stadium">🏟️</span>
+${player.team.teamName}</h2>
+                  <h2 class="text-bold text-xl"> <span>💰</span> ${
+                    player.cost
+                  } $</h2>
                   <p class="text-sm text-gray-500 mt-2 h-10 overflow-hidden">${
                     player.information || "Chưa có thông tin."
                   }</p>
+                  
                 </div>
                 <div class="p-4 border-t border-gray-200 flex justify-between gap-2">
                   <button class="flex-1 bg-gray-600 text-white py-2 px-4 rounded hover:bg-gray-700 transition-colors open-detail-modal" data-player-id="${
@@ -229,11 +232,13 @@
                   }">
                     Xem thêm
                   </button>
-                  <button class="flex-1 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors open-comment-modal" data-player-id="${
-                    player._id
-                  }" data-player-name="${player.playerName}">
-                    Bình luận
-                  </button>
+                  ${
+                    access_token // Kiểm tra xem có token không để hiện nút bình luận
+                      ? `<button class="flex-1 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors open-comment-modal" data-player-id="${player._id}" data-player-name="${player.playerName}">
+               Bình luận
+             </button>`
+                      : ""
+                  }
                 </div>
               </div>`;
             playerGrid.insertAdjacentHTML("beforeend", playerCard);
@@ -364,16 +369,14 @@
           const openCommentButton = target.closest(".open-comment-modal");
           const viewCommentsTrigger = target.closest(".view-comments-trigger");
 
-          // Mở modal xem chi tiết
+          // Mở modal xem chi tiết (Không cần đăng nhập)
           if (openDetailButton) {
             const playerId = openDetailButton.dataset.playerId;
             try {
-              // ** MỚI: Gọi API để lấy chi tiết 1 cầu thủ **
               const response = await axios.get(
                 `/api/player/searchByID?id=${playerId}`
               );
               const player = response.data.data;
-
               if (player) {
                 document.getElementById("modal-detail-name").textContent =
                   player.playerName;
@@ -402,8 +405,14 @@
             }
           }
 
-          // Mở modal bình luận (giữ nguyên)
+          // Mở modal bình luận (***YÊU CẦU ĐĂNG NHẬP***)
           if (openCommentButton) {
+            // --- START CHANGE ---
+            if (!access_token) {
+              alert("Bạn cần đăng nhập để thực hiện chức năng này!");
+              return; // Dừng lại nếu chưa đăng nhập
+            }
+            // --- END CHANGE ---
             document.getElementById("modal-player-name").textContent =
               openCommentButton.dataset.playerName;
             document.getElementById("modal-player-id").value =
@@ -411,8 +420,14 @@
             document.getElementById("comment-modal").classList.remove("hidden");
           }
 
-          // Mở modal xem các bình luận (giữ nguyên)
+          // Mở modal xem các bình luận (***YÊU CẦU ĐĂNG NHẬP***)
           if (viewCommentsTrigger) {
+            // --- START CHANGE ---
+            if (!access_token) {
+              alert("Bạn cần đăng nhập để xem bình luận!");
+              return; // Dừng lại nếu chưa đăng nhập
+            }
+            // --- END CHANGE ---
             const playerId = viewCommentsTrigger.dataset.playerId;
             const commentsList = document.getElementById("comments-list");
             commentsList.innerHTML =
@@ -453,12 +468,12 @@
               }
             } catch (error) {
               commentsList.innerHTML =
-                '<p class="text-center text-red-500">Không thể tải bình luận. Bạn cần đăng nhập để xem.</p>';
+                '<p class="text-center text-red-500">Không thể tải bình luận. Token có thể đã hết hạn.</p>';
             }
           }
         });
 
-        // Logic đóng modal và gửi form (giữ nguyên như cũ)
+        // Logic đóng modal và gửi form (giữ nguyên)
         const setupModalCloseLogic = (modalId, closeButtonId) => {
           const modal = document.getElementById(modalId);
           const closeButton = document.getElementById(closeButtonId);
@@ -488,6 +503,7 @@
             const rating = document.getElementById("rating").value;
             const content = document.getElementById("content").value;
 
+            // Kiểm tra token một lần nữa để chắc chắn
             if (!access_token) {
               modalErrorMessage.textContent = "Bạn cần đăng nhập để bình luận!";
               return;

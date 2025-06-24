@@ -1,12 +1,18 @@
 const Player = require("../models/player");
 const Comment = require("../models/comment");
+const Team = require("../models/team");
 const findAllPlayer = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
     const [players, totalRecords] = await Promise.all([
-      Player.find({}).skip(skip).limit(limit),
+      // --- THAY ĐỔI DUY NHẤT NẰM Ở ĐÂY ---
+      Player.find({})
+        .populate("team") // Thêm dòng này để lấy thông tin team
+        .skip(skip)
+        .limit(limit),
+      // ------------------------------------
       Player.countDocuments({}),
     ]);
     if (!players || players.length === 0) {
@@ -267,11 +273,9 @@ const fetchCommentWithPlayerID = async (req, res) => {
   const id = req.params.playerId;
 
   try {
-    // THAY ĐỔI DUY NHẤT NẰM Ở ĐÂY
-    // Thêm .populate() để lấy thông tin chi tiết của tác giả trong mỗi comment
     const player = await Player.findById(id).populate({
-      path: "comments.author", // Đường dẫn đến trường cần "lấp đầy"
-      select: "name", // Chỉ lấy trường "name" (và _id) của tác giả cho gọn nhẹ
+      path: "comments.author",
+      select: "name",
     });
 
     if (!player) {

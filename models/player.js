@@ -9,7 +9,7 @@ const playersSchema = new schema(
     isCaptain: { type: Boolean, default: false },
     information: { type: String, require: true },
     comments: [Comment.schema],
-    team: { type: mongoose.Schema.Types.ObjectId, ref: "Teams", require: true },
+    team: { type: mongoose.Schema.Types.ObjectId, ref: "Team", require: true },
   },
   { timestamps: true }
 );

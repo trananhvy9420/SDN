@@ -112,4 +112,12 @@ playerRoute
     protectedRoute,
     playerController.editComment
   );
+playerRoute
+  .route("/:playerId/comments/:commentId/delete")
+  .delete(
+    [param("playerId").isMongoId(), param("commentId").isMongoId()],
+    validate,
+    protectedRoute,
+    playerController.deleteComment
+  );
 module.exports = playerRoute;

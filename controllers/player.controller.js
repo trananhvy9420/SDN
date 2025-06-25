@@ -336,8 +336,8 @@ const editComment = async (req, res) => {
         content: content,
       },
       {
-        new: true, // Trả về document đã được cập nhật
-        runValidators: true, // Chạy các validator của schema (ví dụ: min/max cho rating)
+        new: true,
+        runValidators: true,
       }
     );
     // Trả về thành công
@@ -348,7 +348,7 @@ const editComment = async (req, res) => {
     });
   } catch (error) {
     console.error("Lỗi khi chỉnh sửa bình luận:", error);
-    // Xử lý lỗi validation cụ thể
+
     if (error.name === "ValidationError") {
       return res
         .status(400)
@@ -357,6 +357,32 @@ const editComment = async (req, res) => {
     return res.status(500).json({ message: "Đã xảy ra lỗi máy chủ nội bộ." });
   }
 };
+const deleteComment = async (req, res) => {
+  const { playerId, commentId } = req.params;
+  const memberId = req.member.id;
+  try {
+    // Xóa sub-document trong Player
+    const player = await Player.findOneAndUpdate(
+      { _id: playerId, "comments.author": memberId },
+      { $pull: { comments: { _id: commentId } } }
+    );
+
+    // Xóa trong collection Comment
+    await Comment.findByIdAndDelete(commentId);
+
+    if (!player) {
+      return res
+        .status(404)
+        .json({ message: "Không tìm thấy bình luận hoặc bạn không có quyền." });
+    }
+
+    return res.status(200).json({ message: "Xóa bình luận thành công." });
+  } catch (error) {
+    console.error("Lỗi khi xóa bình luận:", error);
+    return res.status(500).json({ message: "Lỗi máy chủ." });
+  }
+};
+
 module.exports = {
   findAllPlayer,
   foundPlayer,
@@ -367,4 +393,5 @@ module.exports = {
   fetchCommentWithPlayerID,
   deletePlayer,
   editComment,
+  deleteComment,
 };

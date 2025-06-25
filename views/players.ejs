@@ -372,6 +372,7 @@
               `${PLAYER_API_URL}/getAll?page=${page}&limit=${limit}`
             );
             const result = response.data;
+            console.log(result);
             renderTable(result.data || []);
             renderPagination(result.pagination || {});
             currentPage = page;

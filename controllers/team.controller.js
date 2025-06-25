@@ -9,7 +9,7 @@ const findAllTeam = async (req, res) => {
     const queryCondition = { disable: { $ne: true } };
     const [team, totalRecords] = await Promise.all([
       Team.find(queryCondition).skip(skip).limit(limit),
-      Team.countDocuments({}),
+      Team.countDocuments(queryCondition),
     ]);
     if (!team || team.length === 0) {
       return res.status(200).json({

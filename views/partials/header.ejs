@@ -55,7 +55,7 @@
               localStorage.removeItem("access_token");
               localStorage.removeItem("refresh_token");
               alert("Bạn đã đăng xuất thành công!");
-              window.location.href = "/";
+              window.location.replace("/");
             });
           }
         } else if (accessToken && admin === "true") {
@@ -75,8 +75,11 @@
               event.preventDefault();
               localStorage.removeItem("access_token");
               localStorage.removeItem("refresh_token");
+              caches.delete("my-cache").then(() => {
+                console.log("Cache cleared");
+              });
               alert("Bạn đã đăng xuất thành công!");
-              window.location.href = "/";
+              window.location.replace("/");
             });
           }
         } else {

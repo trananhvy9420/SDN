@@ -286,7 +286,7 @@
           const url = teamId ? `${API_URL}/${teamId}` : API_URL;
 
           try {
-            await axios({
+            const response = await axios({
               method: method,
               url: url,
               headers: {
@@ -295,7 +295,9 @@
               },
               data: teamData,
             });
+            alert(response.data.message);
             closeModal(teamModal);
+
             fetchTeams(currentPage); // Refresh the table
           } catch (error) {
             console.error("Error saving team:", error);
@@ -318,12 +320,16 @@
             window.location.href = "/auth?form=login";
             return;
           }
+
           try {
-            await axios.delete(`${API_URL}/delete/${id}`, {
+            const response = await axios.delete(`${API_URL}/delete/${id}`, {
               headers: { Authorization: `Bearer ${token}` },
             });
+
+            alert(response.data.message);
+
             closeModal(deleteConfirmModal);
-            // If the last item on a page is deleted, go to the previous page
+
             if (tableBody.rows.length === 1 && currentPage > 1) {
               fetchTeams(currentPage - 1);
             } else {
@@ -332,6 +338,7 @@
           } catch (error) {
             console.error("Error deleting team:", error);
             if (handleApiError(error)) return; // Stop execution if redirected
+
             // Optionally, show a generic error message on the main page
             alert("Xóa đội thất bại. Vui lòng thử lại.");
           }

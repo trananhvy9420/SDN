@@ -73,6 +73,7 @@ const signUp = async (req, res) => {
         id: savedMember._id,
         membername: savedMember.membername,
         name: savedMember.name,
+        YOB: savedMember.YOB,
       },
     });
   } catch (error) {

@@ -26,6 +26,8 @@ const registerRules = () => {
       .withMessage("Year of birth is required")
       .isISO8601()
       .withMessage("YOB must be a valid date in YYYY-MM-DD format")
+      .isBefore(new Date().toISOString().split("T")[0])
+      .withMessage("YOB must be before today")
       .toDate(),
   ];
 };

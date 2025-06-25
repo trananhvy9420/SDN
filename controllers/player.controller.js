@@ -168,30 +168,21 @@ const updatePlayer = async (req, res) => {
 
 const addComment = async (req, res) => {
   const id = req.params.playerId;
-  const authorId = req.member._id; // Lấy ID của người dùng đang thực hiện request
-
+  const authorId = req.member.id;
   try {
     const player = await Player.findById(id);
     if (!player) {
       return res.status(404).json({ message: "Player not found" });
     }
-
-    // --- BẮT ĐẦU THAY ĐỔI ---
-    // Kiểm tra xem người dùng đã bình luận về cầu thủ này chưa.
-    // Chúng ta sử dụng .find() để tìm trong mảng comments
-    // và so sánh `comment.author` với `authorId`.
-    // Dùng .toString() là quan trọng để đảm bảo so sánh ObjectId của Mongoose một cách chính xác.
     const existingComment = player.comments.find(
       (comment) => comment.author.toString() === authorId.toString()
     );
 
-    // Nếu đã tìm thấy bình luận, trả về lỗi 409 (Conflict)
     if (existingComment) {
       return res
         .status(409)
         .json({ message: "You have already commented on this player." });
     }
-    // --- KẾT THÚC THAY ĐỔI ---
 
     const newComment = {
       rating: req.body.rating,
@@ -199,10 +190,6 @@ const addComment = async (req, res) => {
       author: authorId,
     };
 
-    // Logic còn lại của bạn để lưu comment
-    // (Lưu ý: Đoạn mã gốc của bạn có vẻ tạo comment ở 2 nơi,
-    // một là tạo instance 'a' và lưu riêng, hai là đẩy vào mảng player.comments.
-    // Logic này được giữ nguyên theo yêu cầu ban đầu).
     const a = new Comment({
       rating: req.body.rating,
       content: req.body.content,
@@ -300,7 +287,76 @@ const deletePlayer = async (req, res) => {
       .json({ message: "An error occurred while disabling the team." });
   }
 };
+const editComment = async (req, res) => {
+  const { playerId, commentId } = req.params;
 
+  const memberId = req.member.id;
+
+  const { rating, content } = req.body;
+
+  if (!rating && !content) {
+    return res
+      .status(400)
+      .json({ message: "Cần cung cấp 'rating' hoặc 'content' để cập nhật." });
+  }
+
+  try {
+    const updateFields = {};
+    if (rating) {
+      updateFields["comments.$.rating"] = rating;
+    }
+    if (content) {
+      updateFields["comments.$.content"] = content;
+    }
+
+    const updatedPlayer = await Player.findOneAndUpdate(
+      {
+        _id: playerId,
+        "comments._id": commentId,
+        "comments.author": memberId, // QUAN TRỌNG: Chỉ cho phép tác giả của comment được sửa
+      },
+      {
+        $set: updateFields,
+      },
+      {
+        new: true, // Trả về document đã được cập nhật
+        runValidators: true, // Chạy các validator của schema (ví dụ: min/max cho rating)
+      }
+    );
+
+    if (!updatedPlayer) {
+      return res.status(404).json({
+        message: "Không tìm thấy bình luận hoặc bạn không có quyền chỉnh sửa.",
+      });
+    }
+    const updatedComment = await Comment.findOneAndUpdate(
+      { author: memberId },
+      {
+        rating: rating,
+        content: content,
+      },
+      {
+        new: true, // Trả về document đã được cập nhật
+        runValidators: true, // Chạy các validator của schema (ví dụ: min/max cho rating)
+      }
+    );
+    // Trả về thành công
+    return res.status(200).json({
+      message: "Chỉnh sửa bình luận thành công",
+      data: updatedPlayer,
+      updatedComment,
+    });
+  } catch (error) {
+    console.error("Lỗi khi chỉnh sửa bình luận:", error);
+    // Xử lý lỗi validation cụ thể
+    if (error.name === "ValidationError") {
+      return res
+        .status(400)
+        .json({ message: "Dữ liệu không hợp lệ.", details: error.message });
+    }
+    return res.status(500).json({ message: "Đã xảy ra lỗi máy chủ nội bộ." });
+  }
+};
 module.exports = {
   findAllPlayer,
   foundPlayer,
@@ -310,4 +366,5 @@ module.exports = {
   addComment,
   fetchCommentWithPlayerID,
   deletePlayer,
+  editComment,
 };

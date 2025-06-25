@@ -101,4 +101,15 @@ playerRoute
     playerController.deletePlayer
   );
 
+playerRoute
+  .route("/:playerId/:commentId/editComment")
+  .post(
+    [
+      param("playerId").isMongoId().withMessage("Invalid Player ID format."),
+      param("commentId").isMongoId().withMessage("Invalid Comment ID format."),
+    ],
+    validate,
+    protectedRoute,
+    playerController.editComment
+  );
 module.exports = playerRoute;

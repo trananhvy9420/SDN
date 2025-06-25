@@ -154,6 +154,7 @@ const protectedRoutePage = async (req, res, next) => {
   // Nếu không có header hoặc không đúng định dạng Bearer
   return (res.redirect = "/login");
 };
+
 module.exports = verifyToken;
 module.exports = {
   validate,

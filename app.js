@@ -19,7 +19,10 @@ const Comment = require("./models/comment");
 const connect = require("./db/connect");
 const port = process.env.PORT || 3000;
 // CÁCH VIẾT ĐÚNG: Dấu ngoặc nhọn sẽ chỉ "bóc" lấy đúng hàm có tên là protectedRoute ra khỏi file
-const { protectedRoute } = require("./middlewares/validation.middleware");
+const {
+  protectedRoute,
+  protectedRoutePage,
+} = require("./middlewares/validation.middleware");
 connect.then((db) => {
   console.log("Connected to DB successfully!");
   console.log("PORT" + port);
@@ -63,10 +66,10 @@ app.get("/profileAdmin", (req, res) => {
     member: {}, // Truyền vào một object rỗng để EJS không bị lỗi
   });
 });
-app.get("/admin", (req, res) => {
+app.get("/admin", (req, res, next) => {
+  res.set("Cache-Control", "no-store");
   res.render("admin", {
     title: "Trang admin",
-    isLoggedIn: true,
   });
 });
 app.get("/players", (req, res) => {

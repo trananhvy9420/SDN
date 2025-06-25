@@ -278,6 +278,7 @@
             });
             localStorage.setItem("access_token", response.data.access_token);
             localStorage.setItem("refresh_token", response.data.refresh_token);
+            localStorage.setItem("isAdmin", response.data.member.isAdmin);
             if (response.data.member && response.data.member.isAdmin === true) {
               window.location.href = "/admin";
             } else {

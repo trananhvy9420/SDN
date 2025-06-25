@@ -69,8 +69,8 @@
               "-> Không phát hiện token. Đang hiển thị menu Login/Register."
             );
             navMenu.innerHTML = `
-                <li><a href="/login" class="text-gray-600 hover:text-blue-500 transition-colors">Login</a></li>
-                <li><a href="/register" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors">Register</a></li>
+                <li><a href="/auth?form=login" class="text-gray-600 hover:text-blue-500 transition-colors">Login</a></li>
+                <li><a href="/auth?form=register" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors">Register</a></li>
               `;
           }
         } else {

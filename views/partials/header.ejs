@@ -32,10 +32,10 @@
         const navMenu = document.getElementById("nav-menu");
         const welcomeMessage = document.getElementById("welcome-message");
         const accessToken = localStorage.getItem("access_token");
-
+        const admin = localStorage.getItem("isAdmin");
         navMenu.innerHTML = "";
 
-        if (accessToken) {
+        if (accessToken && admin === "false") {
           // --- KHI ĐÃ ĐĂNG NHẬP ---
           welcomeMessage.textContent = "Chào mừng bạn đã trở lại!";
           navMenu.innerHTML = `
@@ -46,6 +46,27 @@
                 Logout
               </a>
             </li>
+          `;
+
+          const logoutButton = document.getElementById("logout-button");
+          if (logoutButton) {
+            logoutButton.addEventListener("click", (event) => {
+              event.preventDefault();
+              localStorage.removeItem("access_token");
+              localStorage.removeItem("refresh_token");
+              alert("Bạn đã đăng xuất thành công!");
+              window.location.href = "/";
+            });
+          }
+        } else if (accessToken && admin === "true") {
+          // --- KHI ĐÃ ĐĂNG NHẬP ---
+          welcomeMessage.textContent = "Chào mừng bạn đã trở lại!";
+          navMenu.innerHTML = `
+            <li><a href="/user" class="text-gray-600 hover:text-blue-500 transition-colors">Dashboard</a></li>
+                <li><a href="/players" class="text-gray-600 hover:text-blue-500 transition-colors">Players</a></li>
+                <li><a href="/admin" class="text-gray-600 hover:text-blue-500 transition-colors">Teams</a></li>
+                <li><a href="/profileAdmin" class="text-gray-600 hover:text-blue-500 transition-colors">Profile</a></li>
+                <li><a href="#" id="logout-button" class="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition-colors">Logout</a></li>
           `;
 
           const logoutButton = document.getElementById("logout-button");

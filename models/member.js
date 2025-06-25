@@ -1,14 +1,37 @@
+// models/member.js
+
 const mongoose = require("mongoose");
-const schema = mongoose.Schema;
-const memberSchema = new schema(
-  {
-    membername: { type: String, require: true },
-    password: { type: String, require: true },
-    name: { type: String, require: true },
-    YOB: { type: Date, require: true },
-    isAdmin: { type: Boolean, default: false },
+const Schema = mongoose.Schema;
+
+const memberSchema = new Schema({
+  membername: {
+    type: String,
+    required: true,
   },
-  { timestamps: true }
-);
-const Member = mongoose.model("Member", memberSchema);
-module.exports = Member;
+  name: {
+    type: String,
+    required: true,
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  password: {
+    type: String,
+    // Không bắt buộc nữa, vì user có thể đăng nhập bằng Google
+    // required: true,
+  },
+  googleId: {
+    // Thêm trường này
+    type: String,
+  },
+  isAdmin: {
+    type: Boolean,
+    default: false, // Mặc định là false, có thể thay đổi sau này
+  },
+  // Thêm các trường khác nếu cần
+  // ví dụ: avatar: { type: String }
+});
+
+module.exports = mongoose.model("Member", memberSchema);

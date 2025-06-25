@@ -147,7 +147,7 @@
         if (!token) {
           // Nếu không có token, chuyển về trang login
           alert("Vui lòng đăng nhập để xem trang này.");
-          window.location.href = "/login";
+          window.location.href = "/auth?form=login";
           return;
         }
 
@@ -172,7 +172,7 @@
           // Xóa token cũ và chuyển về trang login
           localStorage.removeItem("access_token");
           localStorage.removeItem("refresh_token");
-          window.location.href = "/login";
+          window.location.href = "/auth?form=login";
         }
       });
 

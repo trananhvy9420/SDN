@@ -309,12 +309,11 @@
 
     <script>
       document.addEventListener("DOMContentLoaded", function () {
-        // API URLs
-        const PLAYER_API_URL = "/api/player";
-        const TEAM_API_URL = "/api/team/";
-        const SEARCH_PLAYER_API_URL = "/api/player/search";
+        // --- API & Constants ---
+        const API_BASE_URL = "/api";
+        const limit = 8;
 
-        // DOM Elements
+        // --- DOM Elements ---
         const playerTableBody = document.getElementById("playerTableBody");
         const openCreateModalBtn =
           document.getElementById("openCreateModalBtn");
@@ -330,13 +329,11 @@
           document.getElementById("paginationControls");
         const noDataMessage = document.getElementById("no-data-message");
         const modalApiError = document.getElementById("modalApiError");
-
-        // Search form elements
         const searchForm = document.getElementById("searchForm");
         const searchInput = document.getElementById("searchInput");
         const clearSearchBtn = document.getElementById("clearSearchBtn");
 
-        // Form Fields
+        // --- Form Fields ---
         const playerIdInput = document.getElementById("playerId");
         const playerNameInput = document.getElementById("playerName");
         const imageInput = document.getElementById("image");
@@ -345,15 +342,18 @@
         const informationInput = document.getElementById("information");
         const teamSelect = document.getElementById("team");
 
+        // --- State ---
         let playerToDeleteId = null;
         let currentPage = 1;
-        const limit = 8;
         let playersDataCache = {};
-        let teamsCache = {};
 
         // --- Axios Instance with Auth Header ---
         const getAuthToken = () => localStorage.getItem("access_token");
-        const api = axios.create();
+
+        const api = axios.create({
+          baseURL: API_BASE_URL,
+        });
+
         api.interceptors.request.use(
           (config) => {
             const token = getAuthToken();
@@ -369,10 +369,9 @@
         const fetchPlayers = async (page = 1) => {
           try {
             const response = await api.get(
-              `${PLAYER_API_URL}/getAll?page=${page}&limit=${limit}`
+              `/player/getAll?page=${page}&limit=${limit}`
             );
             const result = response.data;
-            console.log(result);
             renderTable(result.data || []);
             renderPagination(result.pagination || {});
             currentPage = page;
@@ -388,14 +387,10 @@
           }
           try {
             const response = await api.get(
-              `${SEARCH_PLAYER_API_URL}?playerName=${encodeURIComponent(
-                playerName
-              )}`
+              `/player/search?playerName=${encodeURIComponent(playerName)}`
             );
-            const foundPlayer = response.data.data;
-
-            renderTable(foundPlayer);
-            paginationControls.innerHTML = ""; // Hide pagination
+            renderTable(response.data.data);
+            paginationControls.innerHTML = ""; // Hide pagination for search results
           } catch (error) {
             renderTable([]);
             handleApiError(
@@ -407,46 +402,42 @@
 
         const fetchTeams = async () => {
           try {
-            const response = await api.get(TEAM_API_URL);
-            console.log(response);
+            const response = await api.get("/team/");
             const teams = response.data.data || [];
             populateTeamSelect(teams);
-            teamsCache = teams.reduce((acc, team) => {
-              acc[team._id] = team.teamName;
-              return acc;
-            }, {});
           } catch (error) {
             handleApiError(error, "Không thể tải danh sách đội.");
           }
         };
 
+        // REFACTORED to be more readable
         const savePlayer = async (playerData) => {
           const playerId = playerIdInput.value;
-          const method = playerId ? "put" : "post";
-          const url = playerId
-            ? `${PLAYER_API_URL}/${playerId}`
-            : PLAYER_API_URL;
-
+          modalApiError.textContent = "";
           try {
-            await api({ method, url, data: playerData });
+            if (playerId) {
+              // It's an update
+              await api.put(`/player/${playerId}`, playerData);
+            } else {
+              // It's a new creation
+              await api.post("/player/", playerData);
+            }
             closeModal(playerModal);
-            fetchPlayers(currentPage);
+            fetchPlayers(currentPage); // Refresh table
           } catch (error) {
             modalApiError.textContent =
               error.response?.data?.message || "Lưu cầu thủ thất bại.";
           }
         };
 
+        // REFACTORED for consistency
         const deletePlayer = async (id) => {
           try {
-            await api.delete(`/api/player/${id}/delete`);
+            await api.delete(`/player/${id}/delete`);
             closeModal(deleteConfirmModal);
             fetchPlayers(currentPage);
           } catch (error) {
-            handleApiError(
-              error,
-              "Xóa cầu thủ thất bại. Vui lòng kiểm tra lại."
-            );
+            handleApiError(error, "Xóa cầu thủ thất bại.");
           }
         };
 
@@ -456,14 +447,13 @@
           playersDataCache = {};
           if (!players || players.length === 0) {
             noDataMessage.classList.remove("hidden");
-            // Reset message to default in case it was an error message
             noDataMessage.innerHTML = "<p>Không tìm thấy cầu thủ nào.</p>";
             return;
           }
           noDataMessage.classList.add("hidden");
           players.forEach((player) => {
             playersDataCache[player._id] = player;
-            const teamName = teamsCache[player.teams] || "N/A";
+            const teamName = player.team?.teamName ?? "N/A";
             const row = document.createElement("tr");
             row.className = "hover:bg-gray-50";
             row.innerHTML = `
@@ -481,7 +471,7 @@
                 <td class="py-3 px-4 border-b">${player.cost.toLocaleString(
                   "vi-VN"
                 )}</td>
-                <td class="py-3 px-4 border-b">${player.team.teamName}</td>
+                <td class="py-3 px-4 border-b">${teamName}</td>
                 <td class="py-3 px-4 border-b text-center">${
                   player.isCaptain
                     ? '<i class="fas fa-check-circle text-green-500"></i>'
@@ -542,11 +532,12 @@
             error.response?.status === 401 ||
             error.response?.status === 403
           ) {
-            message = "Lỗi xác thực. Vui lòng đăng nhập lại.";
+            message =
+              "Lỗi xác thực hoặc bạn không có quyền. Vui lòng đăng nhập lại.";
           } else if (error.response?.data?.message) {
             message = error.response.data.message;
           }
-          playerTableBody.innerHTML = ""; // Clear table body
+          playerTableBody.innerHTML = ""; // Clear table
           noDataMessage.innerHTML = `<p class="text-red-500">${message}</p>`;
           noDataMessage.classList.remove("hidden");
           paginationControls.innerHTML = "";
@@ -577,7 +568,7 @@
           costInput.value = player.cost;
           informationInput.value = player.information;
           isCaptainInput.checked = player.isCaptain;
-          teamSelect.value = player.team || "";
+          teamSelect.value = player.team?._id || "";
 
           openModal(playerModal);
         };
@@ -588,6 +579,7 @@
         cancelDeleteBtn.addEventListener("click", () =>
           closeModal(deleteConfirmModal)
         );
+
         confirmDeleteBtn.addEventListener("click", () => {
           if (playerToDeleteId) deletePlayer(playerToDeleteId);
         });
@@ -602,7 +594,6 @@
             isCaptain: isCaptainInput.checked,
             team: teamSelect.value,
           };
-          console.log(formData);
           savePlayer(formData);
         });
 
@@ -617,16 +608,19 @@
           fetchPlayers(1);
         });
 
-        document.body.addEventListener("click", (e) => {
+        playerTableBody.addEventListener("click", (e) => {
           const updateBtn = e.target.closest(".update-btn");
           const deleteBtn = e.target.closest(".delete-btn");
-          const paginationBtn = e.target.closest("#paginationControls button");
 
           if (updateBtn) openUpdateForm(updateBtn.dataset.id);
           if (deleteBtn) {
             playerToDeleteId = deleteBtn.dataset.id;
             openModal(deleteConfirmModal);
           }
+        });
+
+        paginationControls.addEventListener("click", (e) => {
+          const paginationBtn = e.target.closest("button");
           if (paginationBtn && !paginationBtn.disabled) {
             fetchPlayers(parseInt(paginationBtn.dataset.page));
           }
@@ -635,7 +629,10 @@
         // --- Initial calls ---
         const initializePage = async () => {
           if (!getAuthToken()) {
-            playerTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-red-500">Không tìm thấy token. Vui lòng đăng nhập.</td></tr>`;
+            handleApiError(
+              {},
+              "Không tìm thấy token. Vui lòng đăng nhập với tư cách admin."
+            );
             return;
           }
           try {

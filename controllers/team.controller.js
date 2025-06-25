@@ -45,6 +45,12 @@ const findAllTeam = async (req, res) => {
 const createTeam = async (req, res) => {
   const { teamName } = req.body;
   try {
+    const existingTeam = await Team.findOne({ teamName: teamName });
+    if (existingTeam) {
+      return res
+        .status(400)
+        .json({ message: "Team with this name already exists." });
+    }
     const newTeamName = new Team({
       teamName: teamName,
     });

@@ -216,8 +216,9 @@
                   <h2 class="text-xl font-bold  truncate text-blue-500"> <span role="img" aria-label="player">👤</span> ${
                     player.playerName
                   }</h2>
-                    <h2 class="text-xl font-bold text-gray-900 truncate">  <span role="img" aria-label="stadium">🏟️</span>
-${player.team.teamName}</h2>
+                    <h2 class="text-xl font-bold  truncate text-blue-500"> <span role="img" aria-label="player">👤</span> ${
+                      player.team.teamName
+                    }</h2>
                   <h2 class="text-bold text-xl"> <span>💰</span>${player.cost.toLocaleString()}</h2>
                   <p class="text-sm text-gray-500 mt-2 h-10 overflow-hidden">${
                     player.information || "Chưa có thông tin."
@@ -304,7 +305,7 @@ ${player.team.teamName}</h2>
             );
             renderPlayers(response.data.data);
             renderPagination(response.data.pagination);
-            currentPage = page; // Cập nhật trang hiện tại
+            currentPage = page;
           } catch (error) {
             console.error("Lỗi khi tải danh sách cầu thủ:", error);
             playerGrid.innerHTML = `<p class="col-span-full text-center text-red-500">Không thể tải được dữ liệu.</p>`;

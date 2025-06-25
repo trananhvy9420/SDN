@@ -10,10 +10,7 @@ const {
   protectedRoute,
   isAdmin,
 } = require("../middlewares/validation.middleware");
-// memberRoute.route("/login").post(loginRules(), memberController.signIn);
-// memberRoute
-//   .route("/register")
-//   .post(registerRules(), validate, memberController.signUp);
+
 memberRoute.route("/me").get(protectedRoute, memberController.fetchUserProfile);
 memberRoute
   .route("/fetchAllUser")

@@ -154,7 +154,7 @@ const protectedRoutePage = async (req, res, next) => {
   }
 
   // Nếu không có header hoặc không đúng định dạng Bearer
-  return (res.redirect = "/login");
+  return (res.redirect = "/auth?form=login");
 };
 
 module.exports = verifyToken;

@@ -17,6 +17,9 @@ const Player = require("./models/player");
 const Team = require("./models/team");
 const Comment = require("./models/comment");
 const connect = require("./db/connect");
+const session = require("express-session");
+const passport = require("passport");
+require("./config/passport-setup");
 const port = process.env.PORT || 3000;
 // CÁCH VIẾT ĐÚNG: Dấu ngoặc nhọn sẽ chỉ "bóc" lấy đúng hàm có tên là protectedRoute ra khỏi file
 const {
@@ -38,7 +41,18 @@ app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false, // Chỉ lưu session khi có thay đổi
+    cookie: { secure: false }, // Đặt là true nếu dùng HTTPS
+  })
+);
 
+// Khởi tạo Passport
+app.use(passport.initialize());
+app.use(passport.session());
 app.get("/auth", (req, res) => {
   res.render("auth", { title: "Trang Đăng Nhập" });
 });

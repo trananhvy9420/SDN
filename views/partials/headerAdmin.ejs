@@ -60,7 +60,7 @@
                 localStorage.removeItem("access_token");
                 localStorage.removeItem("refresh_token");
                 alert("Bạn đã đăng xuất thành công!");
-                window.location.href = "/login";
+                window.location.href = "/auth?form=login";
               });
             }
           } else {

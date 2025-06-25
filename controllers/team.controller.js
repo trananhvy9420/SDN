@@ -6,8 +6,9 @@ const findAllTeam = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
+    const queryCondition = { disable: { $ne: true } };
     const [team, totalRecords] = await Promise.all([
-      Team.find({}).skip(skip).limit(limit),
+      Team.find(queryCondition).skip(skip).limit(limit),
       Team.countDocuments({}),
     ]);
     if (!team || team.length === 0) {
@@ -109,27 +110,30 @@ const updateTeam = async (req, res) => {
 };
 const deleteTeam = async (req, res) => {
   const teamID = req.params.id;
+
   try {
-    const deleteTeam = await Team.findByIdAndDelete(teamID);
-    const deletePlayerWithThatTeam = await Player.findOneAndDelete({
-      team: teamID,
-    });
-    if (!deleteTeam) {
+    const updatedTeam = await Team.findByIdAndUpdate(
+      teamID,
+      { disable: true },
+      { new: true } // Trả về document sau khi update
+    );
+
+    if (!updatedTeam) {
       return res.status(404).json({ message: "Team not found" });
     }
-    const response = {
-      message: "Deleted team successfully",
-      data: deleteTeam,
-      player: deletePlayerWithThatTeam,
-    };
-    return res.status(200).json(response);
+
+    return res.status(200).json({
+      message: "Team disabled successfully",
+      data: updatedTeam,
+    });
   } catch (error) {
-    console.error("Error deleting team: ", error);
+    console.error("Error disabling team: ", error);
     return res
       .status(500)
-      .json({ message: "An error occurred during registration." });
+      .json({ message: "An error occurred while disabling the team." });
   }
 };
+
 module.exports = {
   findAllTeam,
   createTeam,

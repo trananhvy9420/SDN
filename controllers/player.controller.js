@@ -6,9 +6,10 @@ const findAllPlayer = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
+    const queryCondition = { disable: { $ne: true } };
     const [players, totalRecords] = await Promise.all([
       // --- THAY ĐỔI DUY NHẤT NẰM Ở ĐÂY ---
-      Player.find({})
+      Player.find(queryCondition)
         .populate("team") // Thêm dòng này để lấy thông tin team
         .skip(skip)
         .limit(limit),
@@ -63,7 +64,10 @@ const foundPlayer = async (req, res) => {
 
     // Sử dụng .find() để tìm tất cả các cầu thủ khớp
     // Sử dụng $regex để tìm kiếm những cầu thủ có tên chứa chuỗi ký tự được cung cấp
-    const foundPlayers = await Player.find({ playerName: { $regex: regex } });
+    const foundPlayers = await Player.find({
+      playerName: { $regex: regex },
+      disable: { $ne: true },
+    });
 
     const response = {
       message: "Successfully fetched players",
@@ -300,26 +304,50 @@ const fetchCommentWithPlayerID = async (req, res) => {
       .json({ message: "An internal server error occurred." });
   }
 };
+// const deletePlayer = async (req, res) => {
+//   const id = req.params.playerId;
+//   try {
+//     const player = await Player.findByIdAndDelete(id);
+//     if (!player) {
+//       return res.status(404).json({ message: "Player not found" });
+//     }
+//     const response = {
+//       message: "Delete this player successfully",
+//       data: player,
+//     };
+//     return res.status(200).json(response);
+//   } catch (error) {
+//     console.error("Error deleting player:", error);
+//     console.error("Message:", error.message);
+//     return res
+//       .status(500)
+//       .json({ message: "An internal server error occurred." });
+//   }
+// };
 const deletePlayer = async (req, res) => {
   const id = req.params.playerId;
   try {
-    const player = await Player.findByIdAndDelete(id);
-    if (!player) {
+    const updatedPlayer = await Player.findByIdAndUpdate(
+      id,
+      { disable: true },
+      { new: true } // Trả về document sau khi update
+    );
+
+    if (!updatedPlayer) {
       return res.status(404).json({ message: "Player not found" });
     }
-    const response = {
-      message: "Delete this player successfully",
-      data: player,
-    };
-    return res.status(200).json(response);
+    return res.status(200).json({
+      message: "Team disabled successfully",
+      data: updatedPlayer,
+    });
   } catch (error) {
-    console.error("Error deleting player:", error);
-    console.error("Message:", error.message);
+    console.error("Error disabling player: ", error);
     return res
       .status(500)
-      .json({ message: "An internal server error occurred." });
+      .json({ message: "An error occurred while disabling the team." });
   }
 };
+
 const findPlayerByName = async (req, res) => {
   const playerName = req.params.name;
   try {

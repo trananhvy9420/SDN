@@ -129,8 +129,7 @@
                 d="M12 4a4 4 0 0 1 4 4a4 4 0 0 1-4 4a4 4 0 0 1-4-4a4 4 0 0 1 4-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4"
               />
             </svg>
-            ></span
-          >
+          </span>
         </div>
         <h2 class="text-2xl font-semibold text-center mb-4">
           Tạo tài khoản mới
@@ -253,20 +252,17 @@
 
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-        // --- BẮT ĐẦU: ĐOẠN CODE MỚI ĐỂ XỬ LÝ TOKEN TỪ GOOGLE LOGIN ---
         const urlParamsOnLoad = new URLSearchParams(window.location.search);
         const accessTokenFromUrl = urlParamsOnLoad.get("access_token");
         const refreshTokenFromUrl = urlParamsOnLoad.get("refresh_token");
         const isAdminFromUrl = urlParamsOnLoad.get("isAdmin") === "true";
 
-        // Nếu URL có chứa access_token (nghĩa là vừa login bằng Google xong)
         if (accessTokenFromUrl && refreshTokenFromUrl) {
           // 1. Lưu token vào localStorage
           localStorage.setItem("access_token", accessTokenFromUrl);
           localStorage.setItem("refresh_token", refreshTokenFromUrl);
           localStorage.setItem("isAdmin", isAdminFromUrl);
 
-          // 2. Xóa các tham số token khỏi URL để bảo mật và làm sạch
           const cleanUrl =
             window.location.protocol +
             "//" +
@@ -274,16 +270,13 @@
             window.location.pathname;
           window.history.replaceState({}, document.title, cleanUrl);
 
-          // 3. Chuyển hướng đến trang phù hợp
           if (isAdminFromUrl) {
             window.location.replace("/admin");
           } else {
             window.location.replace("/user");
           }
         }
-        // --- KẾT THÚC: ĐOẠN CODE MỚI ---
 
-        // --- PHẦN 1: CÁC BIẾN VÀ HÀM TIỆN ÍCH ---
         const loginSection = document.getElementById("login-section");
         const registerSection = document.getElementById("register-section");
         const loginForm = document.getElementById("login-form");
@@ -309,7 +302,6 @@
           if (formErrorEl) formErrorEl.textContent = "";
         };
 
-        // --- PHẦN 2: HIỂN THỊ FORM DỰA TRÊN URL KHI TẢI TRANG ---
         const urlParams = new URLSearchParams(window.location.search);
         const formToShow = urlParams.get("form");
         if (formToShow === "register") {
@@ -318,9 +310,6 @@
           loginSection.classList.remove("hidden");
         }
 
-        // --- PHẦN 3: CÁC EVENT LISTENER ---
-
-        // Chuyển đổi giữa các form bằng nút bấm
         showRegisterBtn.addEventListener("click", () => {
           clearErrors("login");
           loginSection.classList.add("hidden");
@@ -333,7 +322,6 @@
           loginSection.classList.remove("hidden");
         });
 
-        // Xử lý submit form đăng nhập
         loginForm.addEventListener("submit", async (event) => {
           event.preventDefault();
           clearErrors("login");
@@ -369,7 +357,6 @@
           }
         });
 
-        // Xử lý submit form đăng ký
         registerForm.addEventListener("submit", async (event) => {
           event.preventDefault();
           clearErrors("register");

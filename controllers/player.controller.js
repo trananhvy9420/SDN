@@ -7,24 +7,17 @@ const findAllPlayer = async (req, res) => {
     const limit = parseInt(req.query.limit) || 8;
     const skip = (page - 1) * limit;
 
-    // Lấy các tham số lọc, bao gồm cả 'status' mới
     const { playerName, teamId, isCaptain, status } = req.query;
 
-    // --- LOGIC LỌC THEO TRẠNG THÁI (MỚI) ---
-    const queryCondition = {}; // Bắt đầu với một object rỗng
+    const queryCondition = {};
 
-    // Dựa vào tham số 'status' để xây dựng điều kiện cho trường 'disable'
     if (status === "disabled") {
       queryCondition.disable = true;
     } else if (status === "all") {
-      // Khi là 'all', chúng ta không thêm điều kiện 'disable' vào query
-      // để lấy tất cả cầu thủ.
     } else {
-      // Mặc định hoặc khi status='active', chỉ lấy cầu thủ đang hoạt động
       queryCondition.disable = { $ne: true };
     }
 
-    // Ghép các điều kiện lọc cũ vào
     if (playerName) {
       queryCondition.playerName = { $regex: playerName, $options: "i" };
     }
@@ -35,7 +28,6 @@ const findAllPlayer = async (req, res) => {
       queryCondition.isCaptain = true;
     }
 
-    // Phần còn lại của hàm giữ nguyên...
     const [players, totalRecords] = await Promise.all([
       Player.find(queryCondition)
         .populate("team")
@@ -433,7 +425,6 @@ const findAllPlayerIsCaptain = async (req, res) => {
       Player.countDocuments(queryCondition),
     ]);
 
-    // Trường hợp không tìm thấy cầu thủ nào
     if (!players || players.length === 0) {
       return res.status(200).json({
         message: "No players found who are captains.",
@@ -446,10 +437,8 @@ const findAllPlayerIsCaptain = async (req, res) => {
       });
     }
 
-    // Tính toán tổng số trang
     const totalPages = Math.ceil(totalRecords / limit);
 
-    // Chuẩn bị response trả về khi thành công
     const response = {
       message: "Successfully fetched players who are captains.",
       data: players,
@@ -471,29 +460,23 @@ const findAllPlayerIsCaptain = async (req, res) => {
 };
 const findAllPlayerInTeam = async (req, res) => {
   try {
-    // Lấy teamID từ params
     const teamID = req.params.teamId;
 
-    // Lấy tham số phân trang từ query string, có giá trị mặc định
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    // Điều kiện truy vấn: tìm cầu thủ trong đội và không bị vô hiệu hóa
     const queryCondition = {
       team: teamID,
       disable: { $ne: true },
     };
 
-    // Sử dụng Promise.all để thực hiện 2 truy vấn song song
     const [players, totalRecords] = await Promise.all([
-      // 1. Lấy danh sách cầu thủ thuộc đội theo trang
       Player.find(queryCondition).populate("team").skip(skip).limit(limit),
-      // 2. Đếm tổng số cầu thủ thỏa mãn điều kiện
+
       Player.countDocuments(queryCondition),
     ]);
 
-    // Trường hợp không tìm thấy cầu thủ nào trong đội
     if (!players || players.length === 0) {
       return res.status(200).json({
         message: "No players found in this team.",
@@ -506,10 +489,8 @@ const findAllPlayerInTeam = async (req, res) => {
       });
     }
 
-    // Tính toán tổng số trang
     const totalPages = Math.ceil(totalRecords / limit);
 
-    // Chuẩn bị response trả về khi thành công
     const response = {
       message: "Successfully fetched players in the team.",
       data: players,
@@ -531,11 +512,10 @@ const findAllPlayerInTeam = async (req, res) => {
 };
 const getPlayerStats = async (req, res) => {
   try {
-    // Sử dụng Promise.all để thực hiện 3 lần đếm song song cho hiệu quả
     const [totalPlayers, disabledPlayers, activePlayers] = await Promise.all([
-      Player.countDocuments(), // Đếm tất cả document
-      Player.countDocuments({ disable: true }), // Chỉ đếm những player có disable = true
-      Player.countDocuments({ disable: { $ne: true } }), // Đếm những player không có disable = true
+      Player.countDocuments(),
+      Player.countDocuments({ disable: true }),
+      Player.countDocuments({ disable: { $ne: true } }),
     ]);
 
     // Trả về kết quả

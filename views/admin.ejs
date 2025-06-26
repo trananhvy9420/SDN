@@ -211,41 +211,25 @@
         let currentPage = 1;
         const limit = 10;
 
-        // --- Centralized Error Handling ---
-        /**
-         * Handles API errors, redirecting to login on auth failure.
-         * @param {Error} error - The error object from Axios.
-         * @returns {boolean} - Returns true if the error was an auth error and was handled.
-         */
         const handleApiError = (error) => {
           if (
             error.response &&
             (error.response.status === 401 || error.response.status === 403)
           ) {
-            // Clear token and redirect to login for any authentication/authorization error
             localStorage.removeItem("access_token");
             localStorage.removeItem("refresh_token");
             window.location.href = "/auth?form=login";
-            return true; // Indicates auth error was handled
+            return true;
           }
-          return false; // Indicates it was another type of error
+          return false;
         };
 
-        // --- API Functions ---
-
-        /**
-         * Fetches teams from the API with pagination using Axios.
-         * @param {number} page - The page number to fetch.
-         * @param {number} limit - The number of items per page.
-         */
         const fetchTeams = async (page = 1, limit = 10) => {
           const token = localStorage.getItem("access_token");
           if (!token) {
-            // If no token exists client-side, redirect to login immediately.
             window.location.href = "/auth?form=login";
             return;
           }
-
           try {
             const response = await axios.get(
               `${API_URL}?page=${page}&limit=${limit}`,
@@ -259,9 +243,8 @@
             currentPage = page;
           } catch (error) {
             console.error("Error fetching teams:", error);
-            if (handleApiError(error)) return; // Stop execution if redirected
+            if (handleApiError(error)) return;
 
-            // Handle other errors (e.g., server down)
             const errorMessage =
               "Không thể tải danh sách đội. Vui lòng thử lại sau.";
             tableBody.innerHTML = `<tr><td colspan="3" class="text-center py-10 text-red-500">${errorMessage}</td></tr>`;
@@ -270,17 +253,12 @@
           }
         };
 
-        /**
-         * Creates or updates a team using Axios.
-         * @param {object} teamData - The data for the team.
-         */
         const saveTeam = async (teamData) => {
           const token = localStorage.getItem("access_token");
           if (!token) {
             window.location.href = "/auth?form=login";
             return;
           }
-
           const teamId = teamIdInput.value;
           const method = teamId ? "put" : "post";
           const url = teamId ? `${API_URL}/${teamId}` : API_URL;
@@ -298,29 +276,23 @@
             alert(response.data.message);
             closeModal(teamModal);
 
-            fetchTeams(currentPage); // Refresh the table
+            fetchTeams(currentPage);
           } catch (error) {
             console.error("Error saving team:", error);
-            if (handleApiError(error)) return; // Stop execution if redirected
+            if (handleApiError(error)) return;
 
-            // Show other errors in the modal
             modalApiError.textContent =
               error.response?.data?.message || "Lưu đội thất bại.";
             modalApiError.classList.remove("hidden");
           }
         };
 
-        /**
-         * Deletes a team by its ID using Axios.
-         * @param {string} id - The ID of the team to delete.
-         */
         const deleteTeam = async (id) => {
           const token = localStorage.getItem("access_token");
           if (!token) {
             window.location.href = "/auth?form=login";
             return;
           }
-
           try {
             const response = await axios.delete(`${API_URL}/delete/${id}`, {
               headers: { Authorization: `Bearer ${token}` },
@@ -337,20 +309,17 @@
             }
           } catch (error) {
             console.error("Error deleting team:", error);
-            if (handleApiError(error)) return; // Stop execution if redirected
+            if (handleApiError(error)) return;
 
-            // Optionally, show a generic error message on the main page
             alert("Xóa đội thất bại. Vui lòng thử lại.");
           }
         };
-
-        // --- UI Rendering ---
 
         const renderTable = (teams) => {
           tableBody.innerHTML = "";
           if (!teams || teams.length === 0) {
             noTeamsMessage.classList.remove("hidden");
-            paginationControls.innerHTML = ""; // Clear pagination if no teams
+            paginationControls.innerHTML = "";
             return;
           }
           noTeamsMessage.classList.add("hidden");

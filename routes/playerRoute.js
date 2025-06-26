@@ -74,7 +74,12 @@ playerRoute
         .trim()
         .notEmpty()
         .withMessage("playerName must be required"),
-      body("image").trim().notEmpty().withMessage("image must be required"),
+      body("image")
+        .trim()
+        .notEmpty()
+        .withMessage("image must be required")
+        .isURL()
+        .withMessage("image must be a valid URL"),
       body("cost").trim().notEmpty().withMessage("cost must be required"),
       body("information")
         .trim()

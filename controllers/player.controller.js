@@ -4,25 +4,47 @@ const Team = require("../models/team");
 const findAllPlayer = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = parseInt(req.query.limit) || 8;
     const skip = (page - 1) * limit;
+
+    const { playerName, teamId, isCaptain } = req.query;
+
     const queryCondition = { disable: { $ne: true } };
+
+    if (playerName) {
+      queryCondition.playerName = { $regex: playerName, $options: "i" };
+    }
+
+    if (teamId) {
+      queryCondition.team = teamId;
+    }
+
+    if (isCaptain === "true") {
+      queryCondition.isCaptain = true;
+    }
+
     const [players, totalRecords] = await Promise.all([
-      Player.find(queryCondition).populate("team").skip(skip).limit(limit),
-      // ------------------------------------
+      Player.find(queryCondition)
+        .populate("team")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
       Player.countDocuments(queryCondition),
     ]);
+
     if (!players || players.length === 0) {
       return res.status(200).json({
-        message: "No players found.",
+        message: "No players found matching the criteria.",
+        data: [],
         pagination: {
-          limit: parseInt(req.query.limit) || 10,
+          limit: limit,
           currentPage: page,
           totalPages: 0,
           totalRecords: 0,
         },
       });
     }
+
     const totalPages = Math.ceil(totalRecords / limit);
     const response = {
       message: "Successfully fetched players.",
@@ -34,6 +56,7 @@ const findAllPlayer = async (req, res) => {
         totalRecords: totalRecords,
       },
     };
+
     return res.status(200).json(response);
   } catch (error) {
     console.log("Error fetching players:", error);
@@ -42,6 +65,7 @@ const findAllPlayer = async (req, res) => {
       .json({ message: "Error fetching players from database." });
   }
 };
+
 const foundPlayer = async (req, res) => {
   try {
     const playerNameQuery = req.query.playerName;
@@ -51,15 +75,16 @@ const foundPlayer = async (req, res) => {
         .json({ message: "Player name query is required." });
     }
     const regex = new RegExp(playerNameQuery, "i");
-
-    const foundPlayers = await Player.find({
-      playerName: { $regex: regex },
+    const queryCondition = {
       disable: { $ne: true },
-    });
-
+      playerName: { $regex: regex },
+    };
+    const [players] = await Promise.all([
+      Player.find(queryCondition).populate("team"),
+    ]);
     const response = {
       message: "Successfully fetched players",
-      data: foundPlayers,
+      data: players,
     };
 
     return res.status(200).json(response);
@@ -275,19 +300,40 @@ const deletePlayer = async (req, res) => {
   }
 };
 const editComment = async (req, res) => {
-  const { playerId, commentId } = req.params;
-
-  const memberId = req.member.id;
-
-  const { rating, content } = req.body;
-
-  if (!rating && !content) {
-    return res
-      .status(400)
-      .json({ message: "Cần cung cấp 'rating' hoặc 'content' để cập nhật." });
-  }
-
   try {
+    const { playerId, commentId } = req.params;
+    const { rating, content } = req.body;
+    const memberId = req.member.id;
+
+    const player = await Player.findById(playerId);
+
+    if (!player) {
+      return res.status(404).json({ message: "Không tìm thấy cầu thủ." });
+    }
+
+    if (player.disable) {
+      return res.status(403).json({
+        message:
+          "Cầu thủ này đã bị vô hiệu hóa, không thể thực hiện hành động.",
+      });
+    }
+
+    const commentToEdit = player.comments.find(
+      (comment) => comment._id.toString() === commentId
+    );
+
+    if (!commentToEdit) {
+      return res
+        .status(404)
+        .json({ message: "Không tìm thấy bình luận này trong danh sách." });
+    }
+
+    if (commentToEdit.disable) {
+      return res.status(403).json({
+        message: "Bình luận này đã bị khóa và không thể chỉnh sửa nữa.",
+      });
+    }
+
     const updateFields = {};
     if (rating) {
       updateFields["comments.$.rating"] = rating;
@@ -296,52 +342,43 @@ const editComment = async (req, res) => {
       updateFields["comments.$.content"] = content;
     }
 
+    updateFields["comments.$.disable"] = true;
+
     const updatedPlayer = await Player.findOneAndUpdate(
       {
         _id: playerId,
         "comments._id": commentId,
-        "comments.author": memberId, // QUAN TRỌNG: Chỉ cho phép tác giả của comment được sửa
+        "comments.author": memberId,
       },
       {
         $set: updateFields,
-      },
-      {
-        new: true, // Trả về document đã được cập nhật
-        runValidators: true, // Chạy các validator của schema (ví dụ: min/max cho rating)
-      }
-    );
-
-    if (!updatedPlayer) {
-      return res.status(404).json({
-        message: "Không tìm thấy bình luận hoặc bạn không có quyền chỉnh sửa.",
-      });
-    }
-    const updatedComment = await Comment.findOneAndUpdate(
-      { author: memberId },
-      {
-        rating: rating,
-        content: content,
       },
       {
         new: true,
         runValidators: true,
       }
     );
-    // Trả về thành công
+
+    if (!updatedPlayer) {
+      return res.status(404).json({
+        message:
+          "Không có quyền chỉnh sửa bình luận này (có thể không phải bạn là tác giả).",
+      });
+    }
+
     return res.status(200).json({
-      message: "Chỉnh sửa bình luận thành công",
+      message:
+        "Chỉnh sửa bình luận thành công! Bình luận này hiện đã được khóa.",
       data: updatedPlayer,
-      updatedComment,
     });
   } catch (error) {
     console.error("Lỗi khi chỉnh sửa bình luận:", error);
-
     if (error.name === "ValidationError") {
       return res
         .status(400)
         .json({ message: "Dữ liệu không hợp lệ.", details: error.message });
     }
-    return res.status(500).json({ message: "Đã xảy ra lỗi máy chủ nội bộ." });
+    return res.status(500).json({ message: "Đã xảy ra lỗi máy chủ." });
   }
 };
 const deleteComment = async (req, res) => {

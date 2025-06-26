@@ -4,6 +4,7 @@ const commentSchema = new schema(
   {
     rating: { type: Number, min: 1, max: 3, require: true },
     content: { type: String, require: true },
+    disable: { type: Boolean, default: false },
     author: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Member",

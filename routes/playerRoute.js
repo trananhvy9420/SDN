@@ -24,6 +24,37 @@ playerRoute
     playerController.findAllPlayer
   );
 playerRoute
+  .route("/getAllCaptain")
+  .get(
+    [
+      query("page")
+        .optional()
+        .isInt({ min: 1 })
+        .withMessage("Page must be a positive integer"),
+      query("limit")
+        .optional()
+        .isInt({ min: 1, max: 100 })
+        .withMessage("Limit must be between 1 and 100."),
+    ],
+    playerController.findAllPlayerIsCaptain
+  );
+playerRoute
+  .route("/getID/:teamId")
+  .get(
+    [
+      query("page")
+        .optional()
+        .isInt({ min: 1 })
+        .withMessage("Page must be a positive integer"),
+      query("limit")
+        .optional()
+        .isInt({ min: 1, max: 100 })
+        .withMessage("Limit must be between 1 and 100."),
+      param("teamId").trim().notEmpty().withMessage("teamId must be required"),
+    ],
+    playerController.findAllPlayerInTeam
+  );
+playerRoute
   .route("/search")
   .get(
     [query("playerName").trim().notEmpty().withMessage("Name must be filled")],

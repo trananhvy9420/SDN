@@ -44,6 +44,11 @@ const findAllTeam = async (req, res) => {
 //Create Team
 const createTeam = async (req, res) => {
   const { teamName } = req.body;
+  if (teamName.length < 3 || teamName.length > 20) {
+    return res
+      .status(400)
+      .json({ message: "Team name must be between 3 and 20 characters." });
+  }
   try {
     const existingTeam = await Team.findOne({ teamName: teamName });
     if (existingTeam) {

@@ -383,6 +383,120 @@ const deleteComment = async (req, res) => {
   }
 };
 
+const findAllPlayerIsCaptain = async (req, res) => {
+  try {
+    // Lấy tham số phân trang từ query string, có giá trị mặc định
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Điều kiện truy vấn: tìm cầu thủ là đội trưởng và không bị vô hiệu hóa
+    const queryCondition = { isCaptain: true, disable: { $ne: true } };
+
+    // Sử dụng Promise.all để thực hiện 2 truy vấn song song, giúp tăng hiệu năng
+    const [players, totalRecords] = await Promise.all([
+      // 1. Lấy danh sách cầu thủ theo trang
+      Player.find(queryCondition).populate("team").skip(skip).limit(limit),
+      // 2. Đếm tổng số cầu thủ thỏa mãn điều kiện
+      Player.countDocuments(queryCondition),
+    ]);
+
+    // Trường hợp không tìm thấy cầu thủ nào
+    if (!players || players.length === 0) {
+      return res.status(200).json({
+        message: "No players found who are captains.",
+        pagination: {
+          limit: limit,
+          currentPage: page,
+          totalPages: 0,
+          totalRecords: 0,
+        },
+      });
+    }
+
+    // Tính toán tổng số trang
+    const totalPages = Math.ceil(totalRecords / limit);
+
+    // Chuẩn bị response trả về khi thành công
+    const response = {
+      message: "Successfully fetched players who are captains.",
+      data: players,
+      pagination: {
+        limit: limit,
+        currentPage: page,
+        totalPages: totalPages,
+        totalRecords: totalRecords,
+      },
+    };
+
+    return res.status(200).json(response);
+  } catch (error) {
+    console.log("Error fetching players who are captains:", error);
+    return res
+      .status(500)
+      .json({ message: "Error fetching players from database." });
+  }
+};
+const findAllPlayerInTeam = async (req, res) => {
+  try {
+    // Lấy teamID từ params
+    const teamID = req.params.teamId;
+
+    // Lấy tham số phân trang từ query string, có giá trị mặc định
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Điều kiện truy vấn: tìm cầu thủ trong đội và không bị vô hiệu hóa
+    const queryCondition = {
+      team: teamID,
+      disable: { $ne: true },
+    };
+
+    // Sử dụng Promise.all để thực hiện 2 truy vấn song song
+    const [players, totalRecords] = await Promise.all([
+      // 1. Lấy danh sách cầu thủ thuộc đội theo trang
+      Player.find(queryCondition).populate("team").skip(skip).limit(limit),
+      // 2. Đếm tổng số cầu thủ thỏa mãn điều kiện
+      Player.countDocuments(queryCondition),
+    ]);
+
+    // Trường hợp không tìm thấy cầu thủ nào trong đội
+    if (!players || players.length === 0) {
+      return res.status(200).json({
+        message: "No players found in this team.",
+        pagination: {
+          limit: limit,
+          currentPage: page,
+          totalPages: 0,
+          totalRecords: 0,
+        },
+      });
+    }
+
+    // Tính toán tổng số trang
+    const totalPages = Math.ceil(totalRecords / limit);
+
+    // Chuẩn bị response trả về khi thành công
+    const response = {
+      message: "Successfully fetched players in the team.",
+      data: players,
+      pagination: {
+        limit: limit,
+        currentPage: page,
+        totalPages: totalPages,
+        totalRecords: totalRecords,
+      },
+    };
+
+    return res.status(200).json(response);
+  } catch (error) {
+    console.log("Error fetching players in team:", error);
+    return res
+      .status(500)
+      .json({ message: "Error fetching players from database." });
+  }
+};
 module.exports = {
   findAllPlayer,
   foundPlayer,
@@ -394,4 +508,6 @@ module.exports = {
   deletePlayer,
   editComment,
   deleteComment,
+  findAllPlayerIsCaptain,
+  findAllPlayerInTeam,
 };

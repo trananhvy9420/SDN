@@ -37,6 +37,8 @@ const signIn = async (req, res) => {
         refresh_token: refreshToken,
         member: {
           id: member._id,
+          YOB: member.YOB,
+          email: member.email,
           membername: member.membername,
           name: member.name,
           isAdmin: member.isAdmin,

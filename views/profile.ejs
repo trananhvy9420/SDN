@@ -42,7 +42,19 @@
               />
             </div>
             <div class="mb-4">
-              <label for="yob" class="block text-gray-700 font-bold mb-2"
+              <label for="name" class="block text-gray-700 font-bold mb-2"
+                >Email</label
+              >
+              <input
+                readonly
+                type="email"
+                id="email"
+                name="email"
+                class="w-full p-2 border rounded bg-gray-200"
+              />
+            </div>
+            <div class="mb-4">
+              <label for="YOB" class="block text-gray-700 font-bold mb-2"
                 >Năm sinh:</label
               >
               <input
@@ -145,14 +157,12 @@
       // Hàm chạy ngay khi trang được tải xong
       document.addEventListener("DOMContentLoaded", async () => {
         if (!token) {
-          // Nếu không có token, chuyển về trang login
           alert("Vui lòng đăng nhập để xem trang này.");
           window.location.href = "/auth?form=login";
           return;
         }
 
         try {
-          // Dùng Axios gọi API /api/member/me để lấy thông tin user
           const response = await axios.get("/api/member/me", {
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -162,6 +172,7 @@
           // Lấy thông tin và điền vào form
           document.getElementById("membername").value = member.membername;
           document.getElementById("name").value = member.name;
+          document.getElementById("email").value = member.email;
           document.getElementById("YOB").value =
             formatDateForInput(member.YOB) || "";
         } catch (error) {
@@ -181,9 +192,9 @@
       const profileMessage = document.getElementById("profile-message");
       profileForm.addEventListener("submit", async (e) => {
         e.preventDefault();
-        // ... code cập nhật profile của bạn giữ nguyên ...
+
         const name = document.getElementById("name").value;
-        const YOB = document.getElementById("yob").value;
+        const YOB = document.getElementById("YOB").value;
         try {
           await axios.put(
             "/api/member/updateprofile",

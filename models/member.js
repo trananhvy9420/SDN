@@ -17,6 +17,10 @@ const memberSchema = new Schema({
     required: true,
     unique: true,
   },
+  YOB: {
+    type: Date,
+    required: false,
+  },
   password: {
     type: String,
     // Không bắt buộc nữa, vì user có thể đăng nhập bằng Google

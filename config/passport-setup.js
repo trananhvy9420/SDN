@@ -23,7 +23,12 @@ passport.use(
       // Các tùy chọn cho Google Strategy
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "/api/auth/google/callback", // Phải khớp với URI trong Google Console
+      callbackURL: "/api/auth/google/callback",
+      scope: [
+        "profile",
+        "email",
+        "https://www.googleapis.com/auth/user.birthday.read",
+      ], // Phải khớp với URI trong Google Console
     },
     async (accessToken, refreshToken, profile, done) => {
       // Hàm callback này sẽ chạy sau khi user đăng nhập thành công với Google
@@ -33,7 +38,15 @@ passport.use(
       try {
         // Tìm xem user đã tồn tại trong DB của bạn chưa
         const existingMember = await Member.findOne({ googleId: profile.id });
-
+        let yearOfBirth = null;
+        if (
+          profile._json &&
+          profile._json.birthdays &&
+          profile._json.birthdays.length > 0
+        ) {
+          // Lấy năm sinh từ phần tử đầu tiên trong mảng birthdays
+          yearOfBirth = profile._json.birthdays[0].date.year;
+        }
         if (existingMember) {
           // Nếu đã tồn tại, gọi done() với user đó để đăng nhập
           console.log("User already exists:", existingMember);
@@ -45,7 +58,8 @@ passport.use(
           googleId: profile.id, // Lưu googleId để tìm kiếm lần sau
           membername: profile.displayName,
           name: profile.displayName, // Lấy tên từ Google
-          email: profile.emails[0].value, // Lấy email
+          email: profile.emails[0].value,
+          YOB: yearOfBirth, // Lấy email
           // avatar: profile.photos[0].value, // Nếu bạn có trường avatar
           // Các trường khác có thể để mặc định hoặc trống, vì user không đăng ký bằng form
         });

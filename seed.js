@@ -40,8 +40,7 @@ const seedDB = async () => {
         email: "admin@example.com", // Thêm email
         password: "adminpassword",
         name: "Trần Quản Trị",
-        YOB: 1990,
-
+        YOB: new Date("1999-01-01"), // Đổi từ YOB sang định dạng Date
         isAdmin: true,
       },
       {
@@ -49,7 +48,7 @@ const seedDB = async () => {
         email: "anhvy@example.com", // Thêm email
         password: "password123",
         name: "Nguyễn Thị Ánh Vy",
-        YOB: 2002,
+        YOB: new Date("1999-01-01"),
         isAdmin: false,
       },
       {
@@ -57,7 +56,7 @@ const seedDB = async () => {
         email: "baonam@example.com", // Thêm email
         password: "password456",
         name: "Lê Bảo Nam",
-        YOB: 1998,
+        YOB: new Date("1999-01-01"),
         isAdmin: false,
       },
       {
@@ -65,7 +64,7 @@ const seedDB = async () => {
         email: "minhtuan@example.com", // Thêm email
         password: "password789",
         name: "Phạm Minh Tuấn",
-        YOB: 2001,
+        YOB: new Date("1999-01-01"),
         isAdmin: false,
       },
     ];

@@ -56,12 +56,10 @@ const fetchAllMember = async (req, res) => {
   }
 };
 const updateProfile = async (req, res) => {
-  const teamID = req.member.id;
-
-  const { membername, name, YOB } = req.body;
+  const memberId = req.member.id;
+  const { name, YOB } = req.body;
   try {
-    const updatedMember = await Member.findByIdAndUpdate(teamID, {
-      membername: membername,
+    const updatedMember = await Member.findByIdAndUpdate(memberId, {
       name: name,
       YOB: YOB,
     });
@@ -71,7 +69,6 @@ const updateProfile = async (req, res) => {
     const response = {
       message: "Updated member successfully",
       data: {
-        membername: membername,
         name: name,
         YOB: YOB,
       },

@@ -383,7 +383,7 @@
 
         const renderPagination = (pagination) => {
           paginationControls.innerHTML = "";
-          if (!pagination || pagination.totalPages <= 1) {
+          if (!pagination || pagination.totalPages < 1) {
             return;
           }
           const { currentPage, totalPages, totalRecords, limit } = pagination;

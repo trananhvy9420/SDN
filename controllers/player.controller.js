@@ -7,22 +7,35 @@ const findAllPlayer = async (req, res) => {
     const limit = parseInt(req.query.limit) || 8;
     const skip = (page - 1) * limit;
 
-    const { playerName, teamId, isCaptain } = req.query;
+    // Lấy các tham số lọc, bao gồm cả 'status' mới
+    const { playerName, teamId, isCaptain, status } = req.query;
 
-    const queryCondition = { disable: { $ne: true } };
+    // --- LOGIC LỌC THEO TRẠNG THÁI (MỚI) ---
+    const queryCondition = {}; // Bắt đầu với một object rỗng
 
+    // Dựa vào tham số 'status' để xây dựng điều kiện cho trường 'disable'
+    if (status === "disabled") {
+      queryCondition.disable = true;
+    } else if (status === "all") {
+      // Khi là 'all', chúng ta không thêm điều kiện 'disable' vào query
+      // để lấy tất cả cầu thủ.
+    } else {
+      // Mặc định hoặc khi status='active', chỉ lấy cầu thủ đang hoạt động
+      queryCondition.disable = { $ne: true };
+    }
+
+    // Ghép các điều kiện lọc cũ vào
     if (playerName) {
       queryCondition.playerName = { $regex: playerName, $options: "i" };
     }
-
     if (teamId) {
       queryCondition.team = teamId;
     }
-
     if (isCaptain === "true") {
       queryCondition.isCaptain = true;
     }
 
+    // Phần còn lại của hàm giữ nguyên...
     const [players, totalRecords] = await Promise.all([
       Player.find(queryCondition)
         .populate("team")
@@ -56,7 +69,6 @@ const findAllPlayer = async (req, res) => {
         totalRecords: totalRecords,
       },
     };
-
     return res.status(200).json(response);
   } catch (error) {
     console.log("Error fetching players:", error);
@@ -517,6 +529,32 @@ const findAllPlayerInTeam = async (req, res) => {
       .json({ message: "Error fetching players from database." });
   }
 };
+const getPlayerStats = async (req, res) => {
+  try {
+    // Sử dụng Promise.all để thực hiện 3 lần đếm song song cho hiệu quả
+    const [totalPlayers, disabledPlayers, activePlayers] = await Promise.all([
+      Player.countDocuments(), // Đếm tất cả document
+      Player.countDocuments({ disable: true }), // Chỉ đếm những player có disable = true
+      Player.countDocuments({ disable: { $ne: true } }), // Đếm những player không có disable = true
+    ]);
+
+    // Trả về kết quả
+    res.status(200).json({
+      message: "Player statistics fetched successfully.",
+      data: {
+        totalPlayers,
+        disabledPlayers,
+        activePlayers,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching player stats:", error);
+    res
+      .status(500)
+      .json({ message: "Server error while fetching player statistics." });
+  }
+};
+
 module.exports = {
   findAllPlayer,
   foundPlayer,
@@ -530,4 +568,5 @@ module.exports = {
   deleteComment,
   findAllPlayerIsCaptain,
   findAllPlayerInTeam,
+  getPlayerStats,
 };

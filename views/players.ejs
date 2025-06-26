@@ -61,7 +61,7 @@
     </style>
   </head>
   <body class="bg-gray-100 text-gray-800">
-    <%- include('partials/headerAdmin', { isLoggedIn: true }) %>
+    <%- include('partials/header', { isLoggedIn: true }) %>
     <div class="container mx-auto p-4 sm:p-6 lg:p-8">
       <header class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900">
@@ -69,6 +69,52 @@
         </h1>
       </header>
 
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div
+          id="card-all"
+          class="bg-blue-500 text-white rounded-xl shadow-lg p-6 flex items-center justify-between cursor-pointer transform transition-transform hover:scale-105"
+        >
+          <div>
+            <p class="text-sm font-medium uppercase tracking-wider">
+              Tổng Cầu Thủ
+            </p>
+            <p id="totalPlayersStat" class="text-4xl font-bold mt-1">...</p>
+          </div>
+          <div class="text-blue-200">
+            <i class="fas fa-users fa-3x"></i>
+          </div>
+        </div>
+
+        <div
+          id="card-active"
+          class="bg-green-500 text-white rounded-xl shadow-lg p-6 flex items-center justify-between cursor-pointer transform transition-transform hover:scale-105"
+        >
+          <div>
+            <p class="text-sm font-medium uppercase tracking-wider">
+              Hoạt Động
+            </p>
+            <p id="activePlayersStat" class="text-4xl font-bold mt-1">...</p>
+          </div>
+          <div class="text-green-200">
+            <i class="fas fa-user-check fa-3x"></i>
+          </div>
+        </div>
+
+        <div
+          id="card-disabled"
+          class="bg-gray-700 text-white rounded-xl shadow-lg p-6 flex items-center justify-between cursor-pointer transform transition-transform hover:scale-105"
+        >
+          <div>
+            <p class="text-sm font-medium uppercase tracking-wider">
+              Vô Hiệu Hóa
+            </p>
+            <p id="disabledPlayersStat" class="text-4xl font-bold mt-1">...</p>
+          </div>
+          <div class="text-gray-400">
+            <i class="fas fa-user-slash fa-3x"></i>
+          </div>
+        </div>
+      </div>
       <div class="bg-white rounded-lg shadow-md p-6">
         <div
           class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4"
@@ -315,6 +361,21 @@
 
         // --- DOM Elements ---
         const playerTableBody = document.getElementById("playerTableBody");
+        const paginationControls =
+          document.getElementById("paginationControls");
+        const noDataMessage = document.getElementById("no-data-message");
+
+        // Cards
+        const cardAll = document.getElementById("card-all");
+        const cardActive = document.getElementById("card-active");
+        const cardDisabled = document.getElementById("card-disabled");
+
+        // Search
+        const searchForm = document.getElementById("searchForm");
+        const searchInput = document.getElementById("searchInput");
+        const clearSearchBtn = document.getElementById("clearSearchBtn");
+
+        // Modals & Forms
         const openCreateModalBtn =
           document.getElementById("openCreateModalBtn");
         const playerModal = document.getElementById("playerModal");
@@ -325,15 +386,9 @@
         const playerForm = document.getElementById("playerForm");
         const modalTitle = document.getElementById("modalTitle");
         const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
-        const paginationControls =
-          document.getElementById("paginationControls");
-        const noDataMessage = document.getElementById("no-data-message");
         const modalApiError = document.getElementById("modalApiError");
-        const searchForm = document.getElementById("searchForm");
-        const searchInput = document.getElementById("searchInput");
-        const clearSearchBtn = document.getElementById("clearSearchBtn");
 
-        // --- Form Fields ---
+        // Form Fields
         const playerIdInput = document.getElementById("playerId");
         const playerNameInput = document.getElementById("playerName");
         const imageInput = document.getElementById("image");
@@ -342,21 +397,20 @@
         const informationInput = document.getElementById("information");
         const teamSelect = document.getElementById("team");
 
-        // --- State ---
+        // --- State Management ---
         let playerToDeleteId = null;
         let currentPage = 1;
         let playersDataCache = {};
+        let filters = {
+          status: "active", // 'active', 'disabled', 'all'
+          searchQuery: "",
+        };
 
-        // --- Axios Instance with Auth Header ---
-        const getAuthToken = () => localStorage.getItem("access_token");
-
-        const api = axios.create({
-          baseURL: API_BASE_URL,
-        });
-
+        // --- Axios Instance ---
+        const api = axios.create({ baseURL: API_BASE_URL });
         api.interceptors.request.use(
           (config) => {
-            const token = getAuthToken();
+            const token = localStorage.getItem("access_token");
             if (token) {
               config.headers.Authorization = `Bearer ${token}`;
             }
@@ -366,128 +420,155 @@
         );
 
         // --- API Functions ---
-        const fetchPlayers = async (page = 1) => {
+
+        /**
+         * Hàm chính để lấy danh sách cầu thủ, hỗ trợ phân trang và tất cả các bộ lọc.
+         */
+        const fetchAndRenderPlayers = async (page = 1) => {
+          currentPage = page;
+          playerTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-10">Đang tải...</td></tr>`;
+
+          const params = new URLSearchParams({
+            page: currentPage,
+            limit: limit,
+            status: filters.status,
+          });
+
+          if (filters.searchQuery) {
+            params.append("playerName", filters.searchQuery);
+          }
+
           try {
             const response = await api.get(
-              `/player/getAll?page=${page}&limit=${limit}`
+              `/player/getAll?${params.toString()}`
             );
             const result = response.data;
             renderTable(result.data || []);
             renderPagination(result.pagination || {});
-            currentPage = page;
           } catch (error) {
             handleApiError(error, "Không thể tải danh sách cầu thủ.");
           }
         };
 
-        const searchPlayerByName = async (playerName) => {
-          if (!playerName) {
-            fetchPlayers(1);
-            return;
-          }
+        const fetchAndRenderStats = async () => {
           try {
-            const response = await api.get(
-              `/player/search?playerName=${encodeURIComponent(playerName)}`
-            );
-            renderTable(response.data.data);
-            paginationControls.innerHTML = ""; // Hide pagination for search results
+            const response = await api.get("/player/stats");
+            const stats = response.data.data;
+            document.getElementById("totalPlayersStat").textContent =
+              stats.totalPlayers;
+            document.getElementById("activePlayersStat").textContent =
+              stats.activePlayers;
+            document.getElementById("disabledPlayersStat").textContent =
+              stats.disabledPlayers;
           } catch (error) {
-            renderTable([]);
-            handleApiError(
-              error,
-              `Không tìm thấy cầu thủ với tên "${playerName}".`
-            );
+            console.error("Không thể tải dữ liệu thống kê:", error);
+            [
+              "totalPlayersStat",
+              "activePlayersStat",
+              "disabledPlayersStat",
+            ].forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) el.textContent = "N/A";
+            });
           }
         };
 
-        const fetchTeams = async () => {
+        const fetchTeamsForSelect = async () => {
           try {
             const response = await api.get("/team/");
-            const teams = response.data.data || [];
-            populateTeamSelect(teams);
+            populateTeamSelect(response.data.data || []);
           } catch (error) {
             handleApiError(error, "Không thể tải danh sách đội.");
           }
         };
 
-        // REFACTORED to be more readable
         const savePlayer = async (playerData) => {
           const playerId = playerIdInput.value;
           modalApiError.textContent = "";
           try {
-            if (playerId) {
-              // It's an update
-              await api.put(`/player/${playerId}`, playerData);
-            } else {
-              // It's a new creation
-              await api.post("/player/", playerData);
-            }
+            const method = playerId ? "put" : "post";
+            const url = playerId ? `/player/${playerId}` : "/player/";
+            await api({ method, url, data: playerData });
+
             closeModal(playerModal);
-            fetchPlayers(currentPage); // Refresh table
+            await fetchAndRenderPlayers(playerId ? currentPage : 1); // Về trang 1 nếu tạo mới
+            await fetchAndRenderStats(); // Cập nhật lại thống kê
           } catch (error) {
             modalApiError.textContent =
               error.response?.data?.message || "Lưu cầu thủ thất bại.";
           }
         };
 
-        // REFACTORED for consistency
         const deletePlayer = async (id) => {
           try {
             await api.delete(`/player/${id}/delete`);
             closeModal(deleteConfirmModal);
-            fetchPlayers(currentPage);
+            await fetchAndRenderPlayers(currentPage);
+            await fetchAndRenderStats(); // Cập nhật lại thống kê
           } catch (error) {
             handleApiError(error, "Xóa cầu thủ thất bại.");
           }
         };
 
         // --- UI Rendering & Helpers ---
+
         const renderTable = (players) => {
           playerTableBody.innerHTML = "";
           playersDataCache = {};
           if (!players || players.length === 0) {
             noDataMessage.classList.remove("hidden");
-            noDataMessage.innerHTML = "<p>Không tìm thấy cầu thủ nào.</p>";
+            paginationControls.innerHTML = "";
             return;
           }
           noDataMessage.classList.add("hidden");
           players.forEach((player) => {
             playersDataCache[player._id] = player;
-            const teamName = player.team?.teamName ?? "N/A";
             const row = document.createElement("tr");
-            row.className = "hover:bg-gray-50";
+            row.className = `hover:bg-gray-50 ${
+              player.disable ? "bg-red-50 text-gray-400" : ""
+            }`;
             row.innerHTML = `
-                <td class="py-2 px-4 border-b"><img src="${
-                  player.image
-                }" alt="${
+                    <td class="py-2 px-4 border-b"><img src="${
+                      player.image
+                    }" alt="${
               player.playerName
             }" onerror="this.onerror=null;this.src='https://placehold.co/100x100/EFEFEF/AAAAAA&text=N/A';"></td>
-                <td class="py-3 px-4 border-b font-medium">${
-                  player.playerName
-                }</td>
-                <td class="py-3 px-4 border-b info-cell" title="${
-                  player.information
-                }">${player.information}</td>
-                <td class="py-3 px-4 border-b">${player.cost.toLocaleString(
-                  "vi-VN"
-                )}</td>
-                <td class="py-3 px-4 border-b">${teamName}</td>
-                <td class="py-3 px-4 border-b text-center">${
-                  player.isCaptain
-                    ? '<i class="fas fa-check-circle text-green-500"></i>'
-                    : '<i class="fas fa-times-circle text-red-500"></i>'
-                }</td>
-                <td class="py-3 px-4 border-b text-center">
-                    <button class="update-btn text-blue-500 hover:text-blue-700 mr-4" data-id="${
-                      player._id
-                    }"><i class="fas fa-edit"></i></button>
-                    <button class="delete-btn text-red-500 hover:text-red-700" data-id="${
-                      player._id
-                    }"><i class="fas fa-trash"></i></button>
-                </td>
-            `;
+                    <td class="py-3 px-4 border-b font-medium ${
+                      player.disable ? "line-through" : ""
+                    }">${player.playerName}</td>
+                    <td class="py-3 px-4 border-b info-cell" title="${
+                      player.information
+                    }">${player.information}</td>
+                    <td class="py-3 px-4 border-b">${player.cost.toLocaleString(
+                      "vi-VN"
+                    )}</td>
+                    <td class="py-3 px-4 border-b">${
+                      player.team?.teamName ?? "N/A"
+                    }</td>
+                    <td class="py-3 px-4 border-b text-center">${
+                      player.isCaptain
+                        ? '<i class="fas fa-check-circle text-green-500"></i>'
+                        : '<i class="fas fa-times-circle text-red-500"></i>'
+                    }</td>
+                    <td class="py-3 px-4 border-b text-center">
+                        <button class="update-btn text-blue-500 hover:text-blue-700 mr-4" data-id="${
+                          player._id
+                        }" title="Chỉnh sửa"><i class="fas fa-edit"></i></button>
+                        <button class="delete-btn text-red-500 hover:text-red-700" data-id="${
+                          player._id
+                        }" title="Xóa"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
             playerTableBody.appendChild(row);
           });
+        };
+
+        const updateCardStyles = () => {
+          [cardAll, cardActive, cardDisabled].forEach((card) =>
+            card.classList.remove("ring-4", "ring-white")
+          );
+          const activeCard = document.getElementById(`card-${filters.status}`);
+          if (activeCard) activeCard.classList.add("ring-4", "ring-white");
         };
 
         const populateTeamSelect = (teams) => {
@@ -503,7 +584,7 @@
 
         const renderPagination = (pagination) => {
           paginationControls.innerHTML = "";
-          if (!pagination || pagination.totalPages <= 1) return;
+          if (!pagination || pagination.totalPages < 1) return;
           paginationControls.innerHTML = `
               <button class="px-3 py-1 rounded ${
                 pagination.currentPage === 1
@@ -532,18 +613,17 @@
             error.response?.status === 401 ||
             error.response?.status === 403
           ) {
-            message =
-              "Lỗi xác thực hoặc bạn không có quyền. Vui lòng đăng nhập lại.";
+            window.location.href = "/auth?form=login";
+            return;
           } else if (error.response?.data?.message) {
             message = error.response.data.message;
           }
-          playerTableBody.innerHTML = ""; // Clear table
+          playerTableBody.innerHTML = "";
           noDataMessage.innerHTML = `<p class="text-red-500">${message}</p>`;
           noDataMessage.classList.remove("hidden");
           paginationControls.innerHTML = "";
         };
 
-        // --- Modal Handling ---
         const openModal = (modal) => modal.classList.add("flex");
         const closeModal = (modal) => modal.classList.remove("flex");
 
@@ -574,6 +654,7 @@
         };
 
         // --- Event Listeners ---
+
         openCreateModalBtn.addEventListener("click", openCreateForm);
         cancelModalBtn.addEventListener("click", () => closeModal(playerModal));
         cancelDeleteBtn.addEventListener("click", () =>
@@ -599,19 +680,43 @@
 
         searchForm.addEventListener("submit", (e) => {
           e.preventDefault();
-          const searchTerm = searchInput.value.trim();
-          searchPlayerByName(searchTerm);
+          filters.searchQuery = searchInput.value.trim();
+          fetchAndRenderPlayers(1);
         });
 
         clearSearchBtn.addEventListener("click", () => {
           searchInput.value = "";
-          fetchPlayers(1);
+          filters.searchQuery = "";
+          fetchAndRenderPlayers(1);
+        });
+
+        cardAll.addEventListener("click", () => {
+          filters.status = "all";
+          filters.searchQuery = ""; // Reset search on card click
+          searchInput.value = "";
+          updateCardStyles();
+          fetchAndRenderPlayers(1);
+        });
+
+        cardActive.addEventListener("click", () => {
+          filters.status = "active";
+          filters.searchQuery = "";
+          searchInput.value = "";
+          updateCardStyles();
+          fetchAndRenderPlayers(1);
+        });
+
+        cardDisabled.addEventListener("click", () => {
+          filters.status = "disabled";
+          filters.searchQuery = "";
+          searchInput.value = "";
+          updateCardStyles();
+          fetchAndRenderPlayers(1);
         });
 
         playerTableBody.addEventListener("click", (e) => {
           const updateBtn = e.target.closest(".update-btn");
           const deleteBtn = e.target.closest(".delete-btn");
-
           if (updateBtn) openUpdateForm(updateBtn.dataset.id);
           if (deleteBtn) {
             playerToDeleteId = deleteBtn.dataset.id;
@@ -622,25 +727,20 @@
         paginationControls.addEventListener("click", (e) => {
           const paginationBtn = e.target.closest("button");
           if (paginationBtn && !paginationBtn.disabled) {
-            fetchPlayers(parseInt(paginationBtn.dataset.page));
+            fetchAndRenderPlayers(parseInt(paginationBtn.dataset.page));
           }
         });
 
-        // --- Initial calls ---
+        // --- Initializer ---
         const initializePage = async () => {
-          if (!getAuthToken()) {
-            handleApiError(
-              {},
-              "Không tìm thấy token. Vui lòng đăng nhập với tư cách admin."
-            );
+          if (!localStorage.getItem("access_token")) {
+            window.location.href = "/auth?form=login";
             return;
           }
-          try {
-            await fetchTeams();
-            await fetchPlayers();
-          } catch (error) {
-            console.error("Initialization failed:", error);
-          }
+          updateCardStyles();
+          await fetchTeamsForSelect();
+          await fetchAndRenderPlayers();
+          await fetchAndRenderStats();
         };
 
         initializePage();

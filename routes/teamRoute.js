@@ -23,8 +23,6 @@ teamRoute.route("/").get(
       .withMessage("Limit must be a positive number"),
   ],
 
-  protectedRoute,
-
   validate,
   teamController.findAllTeam
 );

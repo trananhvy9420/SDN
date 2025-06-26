@@ -131,7 +131,6 @@ const updatePlayer = async (req, res) => {
     }
   }
 
-  // Kiểm tra xem có dữ liệu để update không
   if (Object.keys(updateData).length === 0) {
     return res
       .status(400)
@@ -199,9 +198,7 @@ const addComment = async (req, res) => {
 
     player.comments.push(newComment);
     const savedPlayer = await player.save();
-
     const addedComment = savedPlayer.comments[savedPlayer.comments.length - 1];
-
     return res.status(201).json({
       message: "Comment added successfully!",
       data: addedComment,
@@ -244,26 +241,7 @@ const fetchCommentWithPlayerID = async (req, res) => {
       .json({ message: "An internal server error occurred." });
   }
 };
-// const deletePlayer = async (req, res) => {
-//   const id = req.params.playerId;
-//   try {
-//     const player = await Player.findByIdAndDelete(id);
-//     if (!player) {
-//       return res.status(404).json({ message: "Player not found" });
-//     }
-//     const response = {
-//       message: "Delete this player successfully",
-//       data: player,
-//     };
-//     return res.status(200).json(response);
-//   } catch (error) {
-//     console.error("Error deleting player:", error);
-//     console.error("Message:", error.message);
-//     return res
-//       .status(500)
-//       .json({ message: "An internal server error occurred." });
-//   }
-// };
+
 const deletePlayer = async (req, res) => {
   const id = req.params.playerId;
   try {
@@ -385,19 +363,15 @@ const deleteComment = async (req, res) => {
 
 const findAllPlayerIsCaptain = async (req, res) => {
   try {
-    // Lấy tham số phân trang từ query string, có giá trị mặc định
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    // Điều kiện truy vấn: tìm cầu thủ là đội trưởng và không bị vô hiệu hóa
     const queryCondition = { isCaptain: true, disable: { $ne: true } };
 
-    // Sử dụng Promise.all để thực hiện 2 truy vấn song song, giúp tăng hiệu năng
     const [players, totalRecords] = await Promise.all([
-      // 1. Lấy danh sách cầu thủ theo trang
       Player.find(queryCondition).populate("team").skip(skip).limit(limit),
-      // 2. Đếm tổng số cầu thủ thỏa mãn điều kiện
+
       Player.countDocuments(queryCondition),
     ]);
 

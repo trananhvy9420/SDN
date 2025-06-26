@@ -53,15 +53,21 @@ const signIn = async (req, res) => {
   }
 };
 const signUp = async (req, res) => {
-  const { membername, password, name, YOB } = req.body;
+  const { membername, password, name, YOB, email } = req.body;
   try {
     const existingMember = await Member.findOne({ membername: membername });
+
     if (existingMember) {
       return res.status(400).json({ message: "Username is already existed" });
+    }
+    const existingEmail = await Member.findOne({ email: email });
+    if (existingEmail) {
+      return res.status(400).json({ message: "Email is already registered" });
     }
     const hashedPassword = await bcrypt.hash(password, 12);
     const newMember = new Member({
       membername: membername,
+      email: email,
       password: hashedPassword,
       name: name,
       YOB: YOB,
@@ -72,6 +78,7 @@ const signUp = async (req, res) => {
       member: {
         id: savedMember._id,
         membername: savedMember.membername,
+        email: savedMember.email,
         name: savedMember.name,
         YOB: savedMember.YOB,
       },

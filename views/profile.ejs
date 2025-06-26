@@ -133,43 +133,31 @@
     <script>
       function formatDateForInput(isoDateString) {
         if (!isoDateString) {
-          return ""; // Trả về rỗng nếu không có ngày
+          return "";
         }
-
-        // Tạo một đối tượng Date từ chuỗi ISO
         const date = new Date(isoDateString);
 
-        // Lấy năm, tháng, ngày
         const year = date.getFullYear();
 
-        // getMonth() trả về từ 0-11, nên phải +1
-        // padStart(2, '0') để đảm bảo luôn có 2 chữ số (ví dụ: 01, 02, ... 12)
         const month = (date.getMonth() + 1).toString().padStart(2, "0");
 
-        // getDate() trả về ngày trong tháng
         const day = date.getDate().toString().padStart(2, "0");
 
-        // Trả về chuỗi theo định dạng mà <input type="date"> yêu cầu
         return `${year}-${month}-${day}`;
       }
       const token = localStorage.getItem("access_token");
 
-      // Hàm chạy ngay khi trang được tải xong
       document.addEventListener("DOMContentLoaded", async () => {
         if (!token) {
           alert("Vui lòng đăng nhập để xem trang này.");
           window.location.href = "/auth?form=login";
           return;
         }
-
         try {
           const response = await axios.get("/api/member/me", {
             headers: { Authorization: `Bearer ${token}` },
           });
-
           const member = response.data.data;
-
-          // Lấy thông tin và điền vào form
           document.getElementById("membername").value = member.membername;
           document.getElementById("name").value = member.name;
           document.getElementById("email").value = member.email;
@@ -180,14 +168,13 @@
           alert(
             "Phiên làm việc đã hết hạn hoặc có lỗi. Vui lòng đăng nhập lại."
           );
-          // Xóa token cũ và chuyển về trang login
+
           localStorage.removeItem("access_token");
           localStorage.removeItem("refresh_token");
           window.location.href = "/auth?form=login";
         }
       });
 
-      // --- Xử lý form cập nhật thông tin (Giữ nguyên như cũ) ---
       const profileForm = document.getElementById("profile-form");
       const profileMessage = document.getElementById("profile-message");
       profileForm.addEventListener("submit", async (e) => {
@@ -196,7 +183,7 @@
         const name = document.getElementById("name").value;
         const YOB = document.getElementById("YOB").value;
         try {
-          await axios.put(
+          const response = await axios.put(
             "/api/member/updateprofile",
             { name, YOB },
             { headers: { Authorization: `Bearer ${token}` } }
@@ -210,12 +197,10 @@
         }
       });
 
-      // --- Xử lý form đổi mật khẩu (Giữ nguyên như cũ) ---
       const passwordForm = document.getElementById("password-form");
       const passwordMessage = document.getElementById("password-message");
       passwordForm.addEventListener("submit", async (e) => {
         e.preventDefault();
-        // ... code đổi mật khẩu của bạn giữ nguyên ...
         const currentPassword =
           document.getElementById("currentPassword").value;
         const newPassword = document.getElementById("newPassword").value;
@@ -228,7 +213,7 @@
           return;
         }
         try {
-          await axios.put(
+          const response = await axios.put(
             "/api/member/updatepassword",
             { currentPassword, newPassword },
             { headers: { Authorization: `Bearer ${token}` } }
@@ -239,8 +224,8 @@
           passwordForm.querySelector('button[type="submit"]').disabled = true;
           localStorage.clear();
           setTimeout(() => {
-            window.location.href = "/"; // Chuyển về trang dashboard
-          }, 3000); // 3000 milliseconds = 3 giây
+            window.location.replace("/");
+          }, 3000);
         } catch (error) {
           passwordMessage.textContent =
             error.response?.data?.message || "Có lỗi xảy ra.";

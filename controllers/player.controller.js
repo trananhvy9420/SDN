@@ -90,6 +90,15 @@ const getPlayerById = async (req, res) => {
 const createPlayer = async (req, res) => {
   const { playerName, image, cost, isCaptain, information, team } = req.body;
   try {
+    const existingPlayer = await Player.findOne({
+      playerName: playerName,
+      disable: { $ne: true },
+    });
+    if (existingPlayer) {
+      return res.status(400).json({
+        message: "Player with this name already exists.",
+      });
+    } // Kiểm tra xem cầu thủ có bị vô hiệu hóa không
     const newPlayer = new Player({
       playerName: playerName,
       image: image,

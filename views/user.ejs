@@ -82,29 +82,38 @@
               &times;
             </button>
           </div>
-          <div>
+          <div class="p-4 bg-white rounded-lg shadow-lg max-w-md mx-auto">
             <img
               id="modal-detail-image"
-              class="w-full h-64 object-cover rounded-md mb-4"
+              class="w-full h-64 object-cover rounded-lg mb-4 border border-gray-200"
               src=""
               alt="Ảnh cầu thủ"
             />
-            <p class="text-lg">
-              <span class="font-bold">Giá:</span>
-              <span id="modal-detail-cost"></span> $
-            </p>
+          
             <p
               id="modal-detail-isCaptain"
-              class="text-lg font-bold text-yellow-600 my-2"
+              class="text-xl font-semibold text-yellow-600 text-center mb-3"
             ></p>
-            <p class="text-base mt-4">
-              <span class="font-bold">Thông tin chi tiết:</span>
-            </p>
-            <p
-              id="modal-detail-info"
-              class="text-gray-700 whitespace-pre-wrap"
-            ></p>
+          
+            <div class="text-lg space-y-2">
+              <p>
+                <span class="font-bold text-gray-800">Giá:</span>
+                <span id="modal-detail-cost" class="text-gray-700"></span> $
+              </p>
+              <p>
+                <span class="font-bold text-gray-800">Đội:</span>
+                <span id="modal-detail-teamname" class="text-gray-700"></span>
+              </p>
+              <div>
+                <p class="font-bold text-gray-800">Thông tin chi tiết:</p>
+                <p
+                  id="modal-detail-info"
+                  class="text-gray-700 whitespace-pre-wrap mt-1"
+                ></p>
+              </div>
+            </div>
           </div>
+          
         </div>
       </div>
 
@@ -310,9 +319,7 @@
                       player.team ? player.team.teamName : "Chưa có đội"
                     }</h2>
                     <h2 class="text-bold text-xl"> <span>💰</span>${player.cost.toLocaleString()}</h2>
-                    <p class="text-sm text-gray-500 mt-2 h-10 overflow-hidden">${
-                      player.information || "Chưa có thông tin."
-                    }</p>
+                    
                   </div>
                   <div class="p-4 border-t border-gray-200 flex justify-between gap-2">
                     <button class="flex-1 bg-gray-600 text-white py-2 px-4 rounded hover:bg-gray-700 transition-colors open-detail-modal" data-player-id="${
@@ -364,16 +371,16 @@
             paginationContainer.innerHTML = paginationHTML;
           };
       
-          // --- Data Fetching Function (DUY NHẤT) ---
+         
           const fetchAndRenderPlayers = async (page = 1) => {
+            const token = localStorage.getItem("access_token");
+            
             currentPage = page;
             playerGrid.innerHTML = `<p class="col-span-full text-center text-gray-500">Đang tải dữ liệu...</p>`;
-      
             const queryParams = new URLSearchParams({
               page: currentPage,
               limit: limit,
             });
-      
             if (filters.searchQuery) {
               queryParams.append('playerName', filters.searchQuery);
             }
@@ -383,9 +390,8 @@
             if (filters.isCaptain) {
               queryParams.append('isCaptain', 'true');
             }
-      
+
             const url = `/api/player/getAll?${queryParams.toString()}`;
-      
             try {
               const response = await axios.get(url);
               renderPlayers(response.data.data);
@@ -396,7 +402,7 @@
             }
           };
       
-          // --- Populate Team Filter (Không thay đổi) ---
+         
           const populateTeamFilter = async () => {
             try {
               const response = await axios.get("/api/team/", {
@@ -415,7 +421,7 @@
             }
           };
       
-          // CẬP NHẬT: Hàm này đọc từ đối tượng `filters` mới
+       
           const updateCaptainButtonState = () => {
             if (filters.isCaptain) {
               captainFilterBtn.classList.remove("bg-yellow-500", "hover:bg-yellow-600");
@@ -428,9 +434,7 @@
             }
           };
       
-          // --- Event Listeners (Đã được viết lại hoàn toàn) ---
-      
-          // Pagination listener: Luôn gọi hàm fetch duy nhất
+        
           paginationContainer.addEventListener("click", (e) => {
             const button = e.target.closest("button");
             if (button && button.dataset.page) {
@@ -441,14 +445,14 @@
             }
           });
       
-          // Search listener: Cập nhật state và gọi hàm fetch duy nhất
+ 
           searchInput.addEventListener("input", (e) => {
-            const query = e.target.value; // không cần trim() ngay để cho phép tìm kiếm với khoảng trắng
+            const query = e.target.value; 
             clearSearchBtn.classList.toggle("hidden", !query);
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
               filters.searchQuery = query.trim();
-              fetchAndRenderPlayers(1); // Reset về trang 1 khi có bộ lọc mới
+              fetchAndRenderPlayers(1); 
             }, 300);
           });
       
@@ -459,21 +463,20 @@
             fetchAndRenderPlayers(1);
           });
       
-          // Captain filter listener: Cập nhật state và gọi hàm fetch duy nhất
+  
           captainFilterBtn.addEventListener("click", () => {
             filters.isCaptain = !filters.isCaptain;
             updateCaptainButtonState();
             fetchAndRenderPlayers(1);
           });
       
-          // Team filter listener: Cập nhật state và gọi hàm fetch duy nhất
+     
           teamFilter.addEventListener("change", (e) => {
             filters.teamId = e.target.value;
             fetchAndRenderPlayers(1);
           });
       
       
-          // --- Modal & Comment Logic (Toàn bộ logic này được giữ nguyên) ---
           playerGrid.addEventListener("click", async (e) => {
             const target = e.target;
             const openDetailButton = target.closest(".open-detail-modal");
@@ -494,6 +497,8 @@
                   document.getElementById("modal-detail-image").src = player.image;
                   document.getElementById("modal-detail-cost").textContent =
                     player.cost.toLocaleString();
+                    document.getElementById("modal-detail-teamname").textContent =
+                    player.team.teamName || "Không có thông tin chi tiết.";  
                   document.getElementById("modal-detail-info").textContent =
                     player.information || "Không có thông tin chi tiết.";
                   const captainEl = document.getElementById(

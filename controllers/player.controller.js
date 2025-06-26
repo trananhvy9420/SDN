@@ -102,7 +102,7 @@ const foundPlayer = async (req, res) => {
 const getPlayerById = async (req, res) => {
   try {
     const id = req.query.id;
-    const player = await Player.findById(id);
+    const player = await Player.findById(id).populate("team");
     if (!player) {
       return res
         .status(404)

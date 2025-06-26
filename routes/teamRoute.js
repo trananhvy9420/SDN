@@ -24,7 +24,7 @@ teamRoute.route("/").get(
   ],
 
   protectedRoute,
-  isAdmin,
+
   validate,
   teamController.findAllTeam
 );

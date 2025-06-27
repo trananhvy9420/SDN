@@ -170,6 +170,16 @@
     </div>
 
     <script>
+      (function () {
+        const access_token = localStorage.getItem("access_token");
+        if (!access_token) {
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          localStorage.removeItem("isAdmin");
+          window.alert("Bạn không có quyền truy cập vào trang này");
+          window.location.replace("/");
+        }
+      })();
       function formatDateForInput(isoDateString) {
         if (!isoDateString) {
           return "";

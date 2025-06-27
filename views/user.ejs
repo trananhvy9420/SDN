@@ -312,7 +312,7 @@
                       player.team ? player.team.teamName : "Chưa có đội"
                     }</h2>
                     <h2 class="text-bold text-xl"> <span>💰</span>${player.cost.toLocaleString()}</h2>
-                    
+
                   </div>
                   <div class="p-4 border-t border-gray-200 flex justify-between gap-2">
                     <button class="flex-1 bg-gray-600 text-white py-2 px-4 rounded hover:bg-gray-700 transition-colors open-detail-modal" data-player-id="${
@@ -563,8 +563,8 @@
                   const isAuthor =
                     comment.author &&
                     currentMember &&
-                    comment.author._id === currentMember._id &&
-                    comment.disable === false;
+                    comment.author._id === currentMember._id;
+
                   const li = document.createElement("li");
                   li.className = "p-4 bg-gray-50 rounded-lg border";
                   li.setAttribute("data-comment-id", comment._id);
@@ -578,8 +578,8 @@
                             isAuthor
                               ? `
                           <div class="flex-shrink-0 flex items-center gap-3">
-                              <button class="edit-comment-btn text-sm text-blue-600 hover:underline" 
-                                      data-player-id="${playerId}" 
+                              <button class="edit-comment-btn text-sm text-blue-600 hover:underline"
+                                      data-player-id="${playerId}"
                                       data-comment-id="${comment._id}"
                                       data-rating="${comment.rating}"
                                       data-content="${encodeURIComponent(

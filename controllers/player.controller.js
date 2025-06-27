@@ -1,6 +1,7 @@
 const Player = require("../models/player");
 const Comment = require("../models/comment");
 const Team = require("../models/team");
+const Member = require("../models/member");
 const findAllPlayer = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -206,6 +207,10 @@ const updatePlayer = async (req, res) => {
 const addComment = async (req, res) => {
   const id = req.params.playerId;
   const authorId = req.member.id;
+  const member = await Member.findById(authorId);
+  if (member.isAdmin === true) {
+    return res.status(404).json({ message: "Admin không được comment" });
+  }
   try {
     const player = await Player.findById(id);
     if (!player) {
@@ -214,13 +219,11 @@ const addComment = async (req, res) => {
     const existingComment = player.comments.find(
       (comment) => comment.author.toString() === authorId.toString()
     );
-
     if (existingComment) {
       return res
         .status(409)
         .json({ message: "You have already commented on this player." });
     }
-
     const newComment = {
       rating: req.body.rating,
       content: req.body.content,

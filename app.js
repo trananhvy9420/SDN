@@ -80,7 +80,7 @@ app.get("/profileAdmin", (req, res) => {
     member: {},
   });
 });
-app.get("/admin", isAdmin, (req, res, next) => {
+app.get("/admin", (req, res, next) => {
   res.render("admin", {
     title: "Trang admin",
   });

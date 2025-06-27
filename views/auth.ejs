@@ -29,8 +29,7 @@
                 d="M12 4a4 4 0 1 1 0 8a4 4 0 0 1 0-8M6.5 14a5.5 5.5 0 0 0-4.86 8.16L1.5 22.5l.16-.14A5.5 5.5 0 0 0 6.5 14m11 0a5.5 5.5 0 0 0-4.86 8.16l-.14.14l.16.14a5.5 5.5 0 0 0 4.84-8.3z"
               />
             </svg>
-            ></span
-          >
+          </span>
         </div>
         <h2 class="text-2xl font-semibold text-center mb-4">
           Đăng nhập tài khoản
@@ -389,6 +388,7 @@
               "refresh_token",
               loginResponse.data.refresh_token
             );
+            localStorage.setItem("isAdmin", loginResponse.data.member.isAdmin);
             window.location.replace("/user");
           } catch (error) {
             console.error("Chi tiết lỗi API:", error.response);

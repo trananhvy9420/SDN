@@ -48,7 +48,7 @@
     </style>
   </head>
   <body class="bg-gray-100 text-gray-800">
-    <%- include('partials/header', { isLoggedIn: true }) %>
+    <%- include('partials/header')%>
     <div class="container mx-auto p-4 sm:p-6 lg:p-8">
       <header class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900">
@@ -183,11 +183,21 @@
     </div>
 
     <script>
+      (function () {
+        const isAdmin = localStorage.getItem("isAdmin") === "true";
+        if (!isAdmin) {
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          localStorage.removeItem("isAdmin");
+          window.alert(
+            "Bạn không có quyền truy cập vào trang này. Vui lòng đăng nhập với tài khoản quản trị."
+          );
+          window.location.replace("/");
+        }
+      })();
       document.addEventListener("DOMContentLoaded", function () {
         // API Base URL
         const API_URL = "/api/team";
-
-        // DOM Elements
         const tableBody = document.getElementById("teamTableBody");
         const openCreateModalBtn =
           document.getElementById("openCreateModalBtn");
@@ -226,10 +236,12 @@
 
         const fetchTeams = async (page = 1, limit = 10) => {
           const token = localStorage.getItem("access_token");
+
           if (!token) {
             window.location.href = "/auth?form=login";
             return;
           }
+
           try {
             const response = await axios.get(
               `${API_URL}?page=${page}&limit=${limit}`,

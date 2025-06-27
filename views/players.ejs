@@ -378,6 +378,18 @@
     </div>
 
     <script>
+      (function () {
+        const isAdmin = localStorage.getItem("isAdmin") === "true";
+        if (!isAdmin) {
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          localStorage.removeItem("isAdmin");
+          window.alert(
+            "Bạn không có quyền truy cập vào trang này. Vui lòng đăng nhập với tài khoản quản trị."
+          );
+          window.location.replace("/");
+        }
+      })();
       document.addEventListener("DOMContentLoaded", function () {
         // --- API & Constants ---
         const API_BASE_URL = "/api";
@@ -449,11 +461,6 @@
           (error) => Promise.reject(error)
         );
 
-        // --- API Functions ---
-
-        /**
-         * Hàm chính để lấy danh sách cầu thủ, hỗ trợ phân trang và tất cả các bộ lọc.
-         */
         const fetchAndRenderPlayers = async (page = 1) => {
           currentPage = page;
           playerTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-10">Đang tải...</td></tr>`;

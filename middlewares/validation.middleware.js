@@ -79,7 +79,7 @@ const isAdmin = async (req, res, next) => {
   if (req.member && req.member.isAdmin) {
     next();
   } else {
-    res.status(403).render("error403", {
+    res.status(403).json({
       title: "Không có quyền truy cập",
       message: "Bạn không có quyền truy cập vào trang này.",
     });

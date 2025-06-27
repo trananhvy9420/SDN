@@ -25,6 +25,8 @@ const port = process.env.PORT || 3000;
 const {
   protectedRoute,
   protectedRoutePage,
+  isAdmin,
+  isAdminPage,
 } = require("./middlewares/validation.middleware");
 connect.then((db) => {
   console.log("Connected to DB successfully!");
@@ -63,25 +65,22 @@ app.get("/user", async (req, res, next) => {
     // Không cần truyền players hay pagination ở đây nữa
   });
 });
-// Sửa lại route /profile trong app.js
+
 app.get("/profile", (req, res) => {
-  // Chỉ cần render một trang tĩnh, không cần truyền dữ liệu member nữa
   res.render("profile", {
     title: "Trang cá nhân",
-    isLoggedIn: true, // Vẫn truyền để header hiển thị đúng
-    member: {}, // Truyền vào một object rỗng để EJS không bị lỗi
+    isLoggedIn: true,
+    member: {},
   });
 });
 app.get("/profileAdmin", (req, res) => {
-  // Chỉ cần render một trang tĩnh, không cần truyền dữ liệu member nữa
   res.render("profileAdmin", {
     title: "Trang cá nhân của admin",
-    isLoggedIn: true, // Vẫn truyền để header hiển thị đúng
-    member: {}, // Truyền vào một object rỗng để EJS không bị lỗi
+    isLoggedIn: true,
+    member: {},
   });
 });
-app.get("/admin", (req, res, next) => {
-  res.set("Cache-Control", "no-store");
+app.get("/admin", isAdmin, (req, res, next) => {
   res.render("admin", {
     title: "Trang admin",
   });

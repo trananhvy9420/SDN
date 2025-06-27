@@ -58,6 +58,7 @@ const fetchAllMember = async (req, res) => {
 const updateProfile = async (req, res) => {
   const memberId = req.member.id;
   const { name, YOB } = req.body;
+
   try {
     const updatedMember = await Member.findByIdAndUpdate(memberId, {
       name: name,
@@ -89,20 +90,15 @@ const updatePassword = async (req, res) => {
     if (!member) {
       return res.status(404).json({ message: "User not found." });
     }
-
-    // Kiểm tra mật khẩu hiện tại có đúng không
     const isMatch = await bcrypt.compare(currentPassword, member.password);
     if (!isMatch) {
       return res
         .status(400)
         .json({ message: "Mật khẩu hiện tại không chính xác." });
     }
-
-    // Băm mật khẩu mới
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-    // Cập nhật mật khẩu mới vào DB
     member.password = hashedPassword;
     await member.save();
 

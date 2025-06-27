@@ -156,10 +156,8 @@ playerRoute
     protectedRoute,
     playerController.deleteComment
   );
-playerRoute.route("/stats").get(
-  protectedRoute, // Đảm bảo người dùng đã đăng nhập
-  isAdmin, // Đảm bảo là admin
-  playerController.getPlayerStats
-);
+playerRoute
+  .route("/stats")
+  .get(protectedRoute, isAdmin, playerController.getPlayerStats);
 
 module.exports = playerRoute;

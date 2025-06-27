@@ -261,7 +261,6 @@
 
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-        // --- DOM Elements ---
         const playerGrid = document.getElementById("player-grid");
         const paginationContainer = document.getElementById(
           "pagination-container"
@@ -273,20 +272,17 @@
         const access_token = localStorage.getItem("access_token");
         const commentsList = document.getElementById("comments-list");
 
-        // --- State ---
         let currentPage = 1;
         const limit = 8;
         let currentMember = null;
         let searchTimeout;
 
-        // TÁI CẤU TRÚC: Một đối tượng duy nhất để quản lý TẤT CẢ trạng thái lọc
         let filters = {
           searchQuery: "",
           teamId: "",
           isCaptain: false,
         };
 
-        // --- Render Functions (Không thay đổi) ---
         const renderPlayers = (players) => {
           playerGrid.innerHTML = "";
           if (!players || players.length === 0) {
